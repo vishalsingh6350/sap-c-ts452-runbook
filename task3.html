@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task 3 — Configuration &amp; Master Data · C_TS452</title>
+<meta name="description" content="Interactive step-by-step runbook for the SAP C_TS452 practical assessment - S/4HANA Cloud Private Edition, Sourcing and Procurement.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<script src="assets/app.js"></script>
+<script>
+var TASK = {
+id:'t3', num:3, budget:55,
+title:'Configuration &amp; Master Data',
+subtitle:'Build the enterprise structure from nothing, then drive one full PR → PO → release → output cycle through it.',
+pills:[['10 steps'],['55 min budget','b'],['Highest risk in the exam','r'],['Needs SPRO + transport','r']],
+org:[
+ ['Plant','<v>Y0##</v>'],
+ ['Purchasing org','<v>P0##</v>'],
+ ['Purchasing group','<v>Z##</v>'],
+ ['Company code','<v>1010</v>'],
+ ['Transport request','<v>C_TS452_##</v>']
+],
+
+intro:[
+ {t:'co',kind:'danger',hd:'This is the only task that uses your own plant and purchasing org',
+  html:'Task 3 = <v>Y0##</v> + <v>P0##</v>. Tasks 4, 5, 6 and 7 all use plant <v>1010</v> and purchasing org <v>101C</v>. '+
+       'If you catch yourself typing <v>Y0##</v> outside this task, stop. <br><br>'+
+       '<b>Y0## and P0## contain a ZERO</b>, not the letter O.'},
+ {t:'co',kind:'info',hd:'Dependency order inside this task',
+  html:'<b>1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10.</b> '+
+       'Step 8 (the workflow) <b>must</b> be finished before step 9, otherwise the purchase order is created without approval and step 10 has nothing to release. '+
+       'Start steps 1–2 early — the plant copy has real runtime and blocks the other eight steps.'}
+],
+
+steps:[
+/* ============================ STEP 1 ============================ */
+{
+n:1, est:10, railTitle:'Copy plant Y0##',
+title:'Create plant <v>Y0##</v> as a <u>copy</u>',
+goal:'A new plant that inherits every dependent assignment from a template plant, located in Nussloch, with storage locations 101A and 101C.',
+blocks:[
+
+{t:'co',kind:'warn',hd:'First decide the template',
+ html:'Look for plant <v>CT00</v>. <b>If it exists, use it.</b> If it does not exist, use <v>1010</v>. '+
+      'The exam asks for CT00 specifically so that plant 1010 is not put at risk for other exercises. <b>Check — do not assume.</b>'},
+
+{t:'path',h:'1a · Check whether CT00 exists',tcode:'OX10',
+ crumbs:['SPRO','Enterprise Structure','Definition','Logistics – General','Define, copy, delete, check plant','Define Plant']},
+
+{t:'path',h:'1b · Open the copy tool',tcode:'EC02',
+ crumbs:['SPRO','Enterprise Structure','Definition','Logistics – General','Define, copy, delete, check plant','Copy, delete, check plant'],
+ note:'<span style="font-size:13px;color:var(--tx3)">If the transaction code does not open, always use the SPRO path — it is the reliable route. Double-click the <i>Copy, delete, check plant</i> activity.</span>'},
+
+{t:'click',h:'What to click',items:[
+ 'Menu <k>Organizational object</k> → <k>Copy org. object</k>  (or press <k>F6</k>)',
+ 'Fill the two fields below and press <k>Enter</k>',
+ 'When asked <b>"Do you want to copy all dependent entries?"</b> → answer <k>Yes</k>',
+ 'Accept / create transport request <v>C_TS452_##</v>',
+ 'Let it run to the end and read the completion log — this can take several minutes'
+]},
+
+{t:'fields',rows:[
+ ['From plant','<v>CT00</v> &nbsp;<span style="color:var(--tx3)">(fallback <v>1010</v>)</span>','only if CT00 does not exist',1],
+ ['To plant','<v>Y0##</v>','Y · zero · your group number',1]
+]},
+
+{t:'co',kind:'danger',hd:'Silent killer — the number one failure in this exam',
+ html:'If you instead go to <i>Define Plant → New Entries</i> and type the plant in by hand, you get a plant with '+
+      '<b>zero dependent assignments</b> — no company code link, no valuation area, no purchasing data. '+
+      'It looks perfect on screen and scores nothing. <b>You must use Copy org. object.</b>'},
+
+{t:'co',kind:'warn',hd:'The copy asks several questions \u2014 answer them differently',
+ html:'<ul class="bl">'+
+ '<li><b>"Copy all dependent entries?"</b> \u2192 <b>Yes.</b> That is the customizing you actually need.</li>'+
+ '<li><b>Anything offering to copy material master data, stock or transaction data</b> \u2192 <b>No / skip.</b> It can run for many minutes and you do not need it.</li>'+
+ '<li><b>Read the completion log before leaving.</b> A copy that ended in errors leaves a half-built plant that still looks fine in <code>OX10</code>.</li></ul>'},
+
+{t:'path',h:'1c · Maintain name and address',tcode:'OX10',
+ crumbs:['SPRO','Enterprise Structure','Definition','Logistics – General','Define, copy, delete, check plant','Define Plant']},
+{t:'click',items:['Select <v>Y0##</v> → <k>Details</k> (magnifier) → fill <f>Name 1</f> → then <k>Address</k> icon for the rest']},
+
+{t:'fields',rows:[
+ ['Name 1  <span style="color:var(--tx3)">(= the "description")</span>','<v>CERT Y0##</v>','exactly one space',1],
+ ['Street','<v>Goethestrasse</v>','any street name is allowed'],
+ ['House number','<v>Y0##</v>','<b>yes, really</b> — the plant key as a house number',1],
+ ['Postal code','<v>69226</v>',''],
+ ['City','<v>Nussloch</v>',''],
+ ['Country','<v>DE</v>',''],
+ ['Region','<v>08</v>','Baden-Württemberg — recommended, not stated'],
+ ['Language','<v>DE</v>','']
+]},
+{t:'click',items:['<k>Save</k> (Ctrl+S)']},
+
+{t:'path',h:'1d · Storage locations 101A and 101C',tcode:'OX09',
+ crumbs:['SPRO','Enterprise Structure','Definition','Materials Management','Maintain storage location']},
+{t:'click',items:[
+ 'Enter plant <v>Y0##</v> → <k>Enter</k>',
+ 'Look at what the copy actually brought across',
+ '<k>New Entries</k> for whichever of <v>101A</v> / <v>101C</v> is missing (any description)'
+]},
+{t:'co',kind:'warn',hd:'Do not assume',html:'The template plant may carry storage locations with completely different IDs. A successful copy does <b>not</b> guarantee 101A and 101C exist. <b>Look.</b>'},
+
+{t:'path',h:'1e · Verify the company code assignment',tcode:'OX18',
+ crumbs:['SPRO','Enterprise Structure','Assignment','Logistics – General','Assign plant to company code']},
+{t:'click',items:['Confirm <v>Y0##</v> sits under company code <v>1010</v>. If not, assign it there.']},
+
+{t:'logs',items:[['plant','Plant created','Y0##'],['tr','Transport request','C_TS452_##']]}
+],
+done:'Plant <v>Y0##</v> exists <b>as a copy</b>, named <v>CERT Y0##</v>, addressed 69226 Nussloch with house number <v>Y0##</v>, has storage locations 101A + 101C, and is assigned to company code 1010.'
+},
+
+/* ============================ STEP 2 ============================ */
+{
+n:2, est:5, railTitle:'Purchasing org P0##',
+title:'Create purchasing organization <v>P0##</v>',
+goal:'A plant-specific purchasing organization for procurement in your new plant.',
+blocks:[
+{t:'path',h:'2a · Define it',
+ crumbs:['SPRO','Enterprise Structure','Definition','Materials Management','Maintain purchasing organization']},
+{t:'click',items:['<k>New Entries</k>','Fill the two fields → <k>Save</k> to transport <v>C_TS452_##</v>']},
+{t:'fields',rows:[
+ ['Purchasing Organization','<v>P0##</v>','P · zero · group number',1],
+ ['Description','<v>CERT P0##</v>','exactly',1]
+]},
+
+{t:'path',h:'2b · Assign it to your plant',tcode:'OX17',
+ crumbs:['SPRO','Enterprise Structure','Assignment','Materials Management','Assign purchasing organization to plant']},
+{t:'click',items:['<k>New Entries</k> → purchasing org <v>P0##</v> + plant <v>Y0##</v> → <k>Save</k>']},
+
+{t:'co',kind:'jud',hd:'Judgment call — do NOT assign it to a company code',
+ html:'<p>The exam says the purchasing org is <b>"plant-specific for procurement in your new plant"</b>.</p>'+
+      '<ul class="bl"><li><b>Plant-specific</b> = assigned to a <b>plant</b>, not to a company code.</li>'+
+      '<li><b>Company-code-specific</b> = assigned in <code>OX01</code>.</li></ul>'+
+      '<p><b>Recommendation:</b> do 2b only, leave <code>OX01</code> empty. That is the literal meaning, and procurement still works because Y0## belongs to company code 1010.</p>'+
+      '<p>If a later step errors saying purchasing org P0## has no company code, add the OX01 assignment then — it does not break the plant assignment.</p>'},
+{t:'logs',items:[['porg','Purchasing org created','P0##']]}
+],
+done:'<v>P0##</v> exists with description <v>CERT P0##</v> and <code>OX17</code> shows the pair P0## + Y0##.'
+},
+
+/* ============================ STEP 3 ============================ */
+{
+n:3, est:8, railTitle:'Product T-RC##',
+title:'Create product master <v>T-RC##</v> (the battery)',
+goal:'A raw material valued by moving average price, stocked in 101C of your new plant, with only the views the purchasing process needs.',
+blocks:[
+{t:'path',tcode:'MM01',crumbs:['Fiori','Manage Product Master Data','Create']},
+
+{t:'fields',h:'Initial screen',rows:[
+ ['Material','<v>T-RC##</v>','',1],
+ ['Industry sector','<v>M</v>','Mechanical engineering, or the default offered'],
+ ['Material type','<v>ROH</v>','raw material',1]
+]},
+
+{t:'list',h:'Select exactly these views',ol:false,items:[
+ '<b>Basic Data 1</b>','<b>Purchasing</b>','<b>General Plant Data / Storage 1</b>',
+ '<b>General Plant Data / Storage 2</b>','<b>Accounting 1</b>',
+ '<span style="color:var(--tx3)">Skip MRP, Sales, Work Scheduling, Costing — the exam says <i>"Only create the necessary data for the purchasing process in the beginning."</i></span>'
+]},
+
+{t:'fields',h:'Organizational levels',rows:[
+ ['Plant','<v>Y0##</v>','',1],
+ ['Storage location','<v>101C</v>','leave this blank and the storage bin field will not take your entry',1]
+]},
+
+{t:'screen',title:'Basic Data 1',blocks:[
+ {t:'fields',h:'',rows:[
+  ['Description (EN)','<v>Battery GR##</v>',''],
+  ['Base Unit of Measure','<v>PC</v>',''],
+  ['Material / Product Group','<v>00103</v>',''],
+  ['Division','<v>00</v>','']
+ ]},
+ {t:'click',h:'The German description — easy to miss, likely graded',items:[
+  'On Basic Data 1 click <k>Additional Data</k>',
+  'Open tab <k>Descriptions</k>',
+  'Add a row: language <v>DE</v> → <v>Batterie GR##</v>',
+  'Confirm the <v>EN</v> row reads <v>Battery GR##</v>',
+  'Click <k>Main Data</k> to return'
+ ]}
+]},
+
+{t:'screen',title:'Purchasing',blocks:[{t:'fields',h:'',rows:[
+ ['Order Unit','<v>PC</v>',''],
+ ['Purchasing Group','<v>Z##</v>','',1],
+ ['Purchasing Value Key','<v>1</v>','',1]
+]}]},
+
+{t:'screen',title:'General Plant Data / Storage 1',blocks:[{t:'fields',h:'',rows:[
+ ['Storage Bin','<v>GR##</v>','note: Task 7 uses <v>C-GR##</v> — different',1]
+]}]},
+
+{t:'screen',title:'Accounting 1',blocks:[{t:'fields',h:'',rows:[
+ ['Valuation Class','<v>3000</v>','',1],
+ ['Price Control','<v>V</v>','= "valued by the moving average price"',1],
+ ['Moving Average Price','<m>500,00</m>','recommended, see below'],
+ ['Price Unit','<v>1</v>','']
+]}]},
+
+{t:'co',kind:'warn',hd:'Why set the price even though the exam does not ask',
+ html:'A material with price 0 and price control V can throw errors on goods receipt and on later valuation postings. '+
+      'Setting <m>500,00</m> matches the info record and costs you three seconds. <b>Price control V is the graded field</b> — do not miss that one.'},
+{t:'co',kind:'warn',hd:'Do not extend to plant 1010',html:'This material belongs to <v>Y0##</v> only.'},
+
+{t:'logs',items:[['prod','Product created','T-RC##']]}
+],
+done:'<code>MM03 T-RC##</code> shows plant Y0##, SLoc 101C, price control <b>V</b>, valuation class 3000, bin GR##, purchasing group Z##, value key 1, and <b>both</b> language descriptions.'
+},
+
+/* ============================ STEP 4 ============================ */
+{
+n:4, est:8, railTitle:'Supplier SP-C##',
+title:'Create supplier <v>SP-C##</v>',
+goal:'A business partner with all three segments: general, company code 1010, and purchasing org P0##.',
+blocks:[
+{t:'path',tcode:'BP',crumbs:['Fiori','Maintain Business Partner']},
+
+{t:'click',h:'4a · Create',items:[
+ '<k>Create</k> → <k>Organization</k>',
+ 'Grouping: <v>BPAB</v>',
+ 'Business Partner number: <v>SP-C##</v>'
+]},
+{t:'co',kind:'danger',hd:'Grouping cannot be changed after you save',
+ html:'Get <v>BPAB</v> right on the create screen. If the BP number field is greyed out you picked a grouping with internal numbering — back out and start again.'},
+
+{t:'screen',title:'Role: Business Partner (Gen.)  —  address data',blocks:[{t:'fields',h:'',rows:[
+ ['Name','<v>CERT Supplier ##</v>','anything sensible'],
+ ['Search Term 1','<v>CTS452-##</v>','',1],
+ ['Street','<v>Goethestrasse</v>',''],
+ ['House Number','<v>C##</v>','',1],
+ ['Postal Code','<v>69226</v>',''],
+ ['City','<v>Nussloch</v>',''],
+ ['Country','<v>DE</v>',''],
+ ['Region','<v>08</v>',''],
+ ['Language','<v>DE</v>','this is "communication is in German"',1]
+]}]},
+
+{t:'screen',title:'Role: FI Vendor (FLVN00)  →  button Company Code  →  1010',blocks:[
+ {t:'fields',h:'',rows:[
+  ['<span style="color:var(--tx3)">tab</span> Vendor: Account Management &rarr; Reconciliation Account','<v>21100000</v>','',1],
+  ['<span style="color:var(--tx3)">tab</span> Vendor: Payment Transactions &rarr; Terms of Payment','<v>0001</v>','',1]
+ ]},
+ {t:'co',kind:'info',hd:'Remember this screen',
+  html:'The <f>Tolerance Group</f> field on <b>Vendor: Payment Transactions</b> is exactly what Task 5 step 6 needs on a different supplier. You are looking at it now — note where it is.'}
+]},
+
+{t:'screen',title:'Role: Supplier (FLVN01)  →  button Purchasing Org  →  P0##',blocks:[{t:'fields',h:'',rows:[
+ ['Order Currency','<v>EUR</v>',''],
+ ['Terms of Payment','<v>0001</v>',''],
+ ['Incoterms','<v>FH</v>','',1],
+ ['Incoterms Location','<v>Nussloch</v>','S/4 often makes this mandatory'],
+ ['Purchasing Group','<v>Z##</v>','"use entries related to your group number"'],
+ ['Planned Delivery Time','<v>15</v>','= "delivers your materials within 15 days"',1],
+ ['GR-Based Inv. Verif.','<b>☑ tick it</b>','= "invoice verification based on the Goods Receipt"',1]
+]}]},
+
+{t:'co',kind:'danger',hd:'Silent killer — switching the role is not enough',
+ html:'You must <b>click the <k>Company Code</k> button and enter 1010</b>, and <b>click the <k>Purchasing Org</k> button and enter P0##</b>. '+
+      'Without those the BP exists and the vendor does not — every later document rejects it, and nothing warns you at save time.'},
+{t:'co',kind:'info',hd:'15 days here, 10 days in step 5 — both are intended',
+ html:'The supplier master carries a general planned delivery time of 15. The info record in step 5 carries 10 for this specific material. They are different fields and the exam wants both.'},
+
+{t:'co',kind:'warn',hd:'If step 9 later rejects this supplier',
+ html:'<div style="font-family:var(--mono);font-size:12.5px;margin:4px 0">Partner function VN is not defined</div>'+
+ 'The purchasing org segment exists but carries no <b>partner functions</b>. Return to <code>BP</code> \u2192 role <k>Supplier</k> \u2192 '+
+ '<k>Purchasing Org</k> <v>P0##</v> \u2192 tab <k>Partner Functions</k> and add <v>VN</v> (vendor). '+
+ 'Normally filled automatically from the account group \u2014 when it is not, this is the error you see.'},
+
+{t:'logs',items:[['supp','Supplier created','SP-C##']]}
+],
+done:'<code>BP SP-C##</code> re-opens and shows all three segments, and the Purchasing Org P0## view still has the GR-based IV tick.'
+},
+
+/* ============================ STEP 5 ============================ */
+{
+n:5, est:10, railTitle:'Info record + scales',
+title:'Purchasing info record — scales and two validity periods',
+goal:'One info record for SP-C## / T-RC## / P0## / Y0##, carrying four prices across two validity periods.',
+blocks:[
+
+{t:'co',kind:'info',hd:'What you are building — read this before touching the screen',
+ html:'<table class="dc"><tr><th>Period</th><th>Quantity 1–10</th><th>Quantity 11 and above</th></tr>'+
+      '<tr><td>Today → 31.12 this year</td><td><m>500,00</m></td><td><m>450,00</m></td></tr>'+
+      '<tr><td>01.01 next year → 31.12.9999</td><td><m>520,00</m></td><td><m>470,00</m></td></tr></table>'+
+      '<p style="margin-top:8px">That is <b>one condition record with a scale, twice</b> — once per validity period. Not four records.</p>'},
+
+{t:'co',kind:'jud',hd:'Judgment call — the scale quantity is 11, not 10',
+ html:'<p>The exam says <i>"Once you order a quantity higher than 10 pc, you pay 450."</i> Higher than 10 literally means <b>11 and above</b>.</p>'+
+      '<p><b>Use 11.</b> Reasoning: at quantity 11 both readings return 450, so 11 is safe for that check. At quantity 10, only the "11" version still returns 500 — which is what <i>"The price for one battery is 500"</i> requires. '+
+      'The 11 entry is correct under both checks; a scale at 10 is correct under only one.</p>'},
+
+{t:'path',h:'Create',tcode:'ME11',crumbs:['Fiori','Manage Purchasing Info Records','Create']},
+
+{t:'screen',title:'Screen 1  ·  Create Info Record: Initial Screen',blocks:[
+ {t:'fields',h:'',rows:[
+  ['Vendor','<v>SP-C##</v>',''],
+  ['Material','<v>T-RC##</v>',''],
+  ['Purchasing Org','<v>P0##</v>','not 101C',1],
+  ['Plant','<v>Y0##</v>','<b>must</b> be filled — see warning below',1],
+  ['Info Record (number)','<i>leave blank</i>','assigned internally'],
+  ['Info category','<b>◉ Standard</b>','radio button at the bottom',1]
+ ]},
+ {t:'click',items:['<k>Enter</k>']}
+]},
+
+{t:'screen',title:'Screen 2  ·  General Data',blocks:[
+ {t:'click',items:['Nothing here is mandatory. Click <k>Purch. Org Data 1</k> (or press <k>Enter</k>)']}
+]},
+
+{t:'screen',title:'Screen 3  ·  Purchasing Organization Data 1',blocks:[
+ {t:'fields',h:'',rows:[
+  ['Planned Deliv. Time','<v>10</v>','',1],
+  ['Purchasing Group','<v>Z##</v>',''],
+  ['Standard Qty','<v>100</v>','= "The standard order quantity is 100 pc"',1],
+  ['Net Price','<m>500,00</m>','this seeds condition PB00'],
+  ['Currency / per / UoM','<v>EUR</v> / <v>1</v> / <v>PC</v>','price unit 1, not 100',1],
+  ['Tax Code','<i>accept the proposal</i>','']
+ ]},
+ {t:'click',items:['Click the <k>Conditions</k> button in the bottom application toolbar']}
+]},
+
+{t:'deep',open:true,title:'DEEP DIVE — the conditions and scales screen, click by click',
+ sub:'the part that cost you time last practice',blocks:[
+
+ {t:'co',kind:'info',hd:'Where you now are',
+  html:'The screen is titled something like <b>"Create Info Record: Condition (Gross Price)"</b>. '+
+       'At the <b>top</b> it has <f>Valid From</f> and <f>Valid To</f>. In the <b>middle</b> is a condition line: <code>PB00</code> with amount <m>500,00</m>, per <code>1</code>, <code>PC</code>.'},
+
+ {t:'list',h:'A · Set the validity FIRST — before the scale, before saving',items:[
+  'At the top of the condition screen set <f>Valid From</f> = <b>today</b>',
+  'Set <f>Valid To</f> = <v>31.12.</v> <b>of the current year</b> &nbsp;<span style="color:var(--tx3)">(it defaults to 31.12.9999 — change it)</span>',
+  'Press <k>Enter</k>'
+ ]},
+ {t:'co',kind:'danger',hd:'This is why the second period fails later',
+  html:'If you leave <f>Valid To</f> at <b>31.12.9999</b>, then when you try to add the next-year period SAP answers '+
+       '<i>"Condition record already exists in this period"</i> and refuses. Closing the current-year record at 31.12 <b>now</b> prevents that entirely.'},
+
+ {t:'list',h:'B · Add the scale',items:[
+  '<b>Click the row-selection box at the far LEFT of the <code>PB00</code> line</b> so the whole line is highlighted',
+  'Click the <k>Scales</k> button in the application toolbar &nbsp;<span style="color:var(--tx3)">(stairs icon)</span> — or menu <k>Goto</k> → <k>Scales</k>',
+  'You land on a small grid with columns <f>Scale quantity</f> and <f>Amount</f>',
+  'Enter the scale line — see the table below',
+  'Press <k>Enter</k>, then <k>Back</k> (F3) to return to the condition overview',
+  'The <code>PB00</code> line now carries a scale indicator'
+ ]},
+ {t:'fields',h:'What to type in the scale grid',rows:[
+  ['Scale quantity','<v>11</v>','unit <v>PC</v>',1],
+  ['Amount','<m>450,00</m>','currency <v>EUR</v>',1]
+ ]},
+ {t:'co',kind:'warn',hd:'Two variants of the scale grid — both are fine',
+  html:'<ul class="bl">'+
+  '<li><b>Grid opens empty:</b> enter only the one line <v>11</v> → <m>450,00</m>. The condition’s own amount of 500 covers quantities 1–10 automatically.</li>'+
+  '<li><b>Grid opens with a first row</b> (quantity 0 or 1, amount 500): leave it exactly as it is and add <v>11</v> → <m>450,00</m> underneath.</li>'+
+  '</ul><p>Either way the result is: 1–10 pieces = 500, 11 and above = 450.</p>'},
+ {t:'co',kind:'warn',hd:'If the Scales button is greyed out',
+  html:'You have not selected the condition line. Click the narrow <b>selection box at the far left</b> of the PB00 row — not the amount field, not the condition type text. The line must be highlighted.'},
+
+ {t:'list',h:'C · Save',items:['<k>Save</k> (Ctrl+S). SAP assigns the info record number — write it down.']},
+
+ {t:'co',kind:'ok',hd:'Checkpoint before you go on',
+  html:'Run <code>ME13</code> → <k>Conditions</k>. You should see one validity period, ending 31.12 of this year, with a scale on PB00. '+
+       'If that is not what you see, fix it now — the next part builds on it.'},
+
+ {t:'list',h:'D · The next-year period — primary route (ME12)',items:[
+  '<code>ME12</code> → same key (vendor / material / <v>P0##</v> / <v>Y0##</v>) → <k>Enter</k>',
+  'Pass through General Data to <b>Purch. Org Data 1</b>',
+  'Click <k>Conditions</k>',
+  'Click the <k>Validity Periods</k> button in the toolbar &nbsp;<span style="color:var(--tx3)">(or menu <k>Goto</k> → <k>Validity periods</k>)</span>',
+  'A list of periods appears. Create a <b>new</b> period — the <k>Create</k> / <k>New validity period</k> icon, or <k>F5</k>',
+  'Enter <f>Valid From</f> <v>01.01.</v><b>next year</b> and <f>Valid To</f> <v>31.12.9999</v>',
+  'Enter <code>PB00</code> amount <m>520,00</m> per <v>1</v> <v>PC</v>',
+  'Select the line → <k>Scales</k> → <v>11</v> → <m>470,00</m>',
+  '<k>Save</k>'
+ ]},
+
+ {t:'co',kind:'jud',hd:'Fallback route if the Validity Periods button is not where you expect',
+  html:'<p>Use condition maintenance directly — it is the same data, a friendlier screen:</p>'+
+  '<ol class="st">'+
+  '<li>Transaction <code>MEK1</code> &nbsp;(Create Conditions – Purchasing)</li>'+
+  '<li>Condition type <v>PB00</v> → <k>Enter</k></li>'+
+  '<li>In the key-combination popup choose <b>Material Info Record</b></li>'+
+  '<li>Enter Vendor <v>SP-C##</v>, Material <v>T-RC##</v>, Purch. Org <v>P0##</v>, Plant <v>Y0##</v>, Info category <v>0</v> (standard)</li>'+
+  '<li>Validity <v>01.01.</v>next year → <v>31.12.9999</v>, amount <m>520,00</m></li>'+
+  '<li>Select the line → <k>Scales</k> → <v>11</v> → <m>470,00</m> → <k>Save</k></li>'+
+  '</ol>'+
+  '<p style="margin-top:6px">Use <code>MEK2</code> to change an existing one. This writes to the same condition table the info record reads.</p>'},
+
+ {t:'table',h:'Scales troubleshooting — symptom → cause → fix',cols:['What you see','What it means / what to do'],rows:[
+  ['<k>Scales</k> button greyed out','The condition line is not selected. Click the selection box at the far left of the PB00 row.'],
+  ['"Condition record already exists in this period"','The current-year record still ends 31.12.9999. Go back to <code>ME12</code>, close it at 31.12 of this year, then retry the new period.'],
+  ['Scale saved but the PO still prices at 500 for 20 pieces','Scale basis is value instead of quantity, or the scale went on the wrong condition type. It must be on <code>PB00</code> with a quantity scale.'],
+  ['Price comes out 100× too small','<f>Price unit</f> is 100 instead of <v>1</v>. The price is <m>500,00</m> per <b>1</b> PC.'],
+  ['Second period overwrote the first','You edited the existing record instead of creating a new validity period. Re-create the current-year record with the correct valid-to.'],
+  ['Info record not found by the PR in step 7','The <f>Plant</f> was left blank on the initial screen, or you used purchasing org 101C instead of <v>P0##</v>.']
+ ]},
+
+ {t:'co',kind:'ok',hd:'Final proof for step 5',
+  html:'<code>ME13</code> → <k>Conditions</k> → <k>Validity Periods</k> shows <b>two</b> periods. Open each one and confirm it carries a scale. That is the whole step.'}
+]},
+
+{t:'logs',items:[['pir','Info record number','']]}
+],
+done:'<code>ME13</code> shows two validity periods for purchasing org <v>P0##</v> / plant <v>Y0##</v>, each with a base price and a scale at 11.'
+},
+
+/* ============================ STEP 6 ============================ */
+{
+n:6, est:5, railTitle:'Purchase requisition',
+title:'Purchase requisition — <u>one</u> requisition, <u>two</u> items',
+goal:'50 batteries for stock plus 5 for the engineering cost center, on a single requisition, with no source assigned yet.',
+blocks:[
+{t:'co',kind:'danger',hd:'Before entering anything: deselect Source Determination',
+ html:'In <code>ME51N</code> it is a checkbox in the header area. In the Fiori app it is a toggle on the creation screen. '+
+      '<b>Untick it first.</b> The exam raises this in a Note for a reason: step 7 exists purely to assign the source by hand. '+
+      'If a source appears automatically, delete the requisition and start over.'},
+{t:'path',tcode:'ME51N',crumbs:['Fiori','Create Purchase Requisition']},
+{t:'table',h:'The two items',cols:['','Item 10','Item 20'],rows:[
+ ['Material','<v>T-RC##</v>','<v>T-RC##</v>'],
+ ['Quantity','<v>50</v> PC &nbsp;<span style="color:var(--tx3)">(stock)</span>','<v>5</v> PC &nbsp;<span style="color:var(--tx3)">(engineering test)</span>'],
+ ['Plant','<v>Y0##</v>','<v>Y0##</v>'],
+ ['Storage location','<v>101C</v>','—'],
+ ['Purchasing group','<v>Z##</v>','<v>Z##</v>'],
+ ['Acct assignment cat.','<i>blank</i>','<v>K</v>'],
+ ['Cost center','—','<v>T-ENG##</v>'],
+ ['G/L account','—','<i>accept the proposal</i>'],
+ ['Delivery date','today + 20 days','today + 20 days']
+]},
+{t:'co',kind:'warn',hd:'Two traps here',
+ html:'<ul class="bl">'+
+ '<li><b>One document, two items.</b> "Create the first purchase requisition… they need to order five additional batteries" — additional <i>items</i>, same requisition.</li>'+
+ '<li><b>Delivery date must clear the 10-day planned delivery time</b> plus processing, or you collect date warnings and a back-dated schedule. Today + 20 is comfortable.</li></ul>'},
+{t:'logs',items:[['pr','Purchase requisition number','']]}
+],
+done:'One requisition, two items, plant Y0## on both, and <b>no</b> source of supply on either.'
+},
+
+/* ============================ STEP 7 ============================ */
+{
+n:7, est:3, railTitle:'Assign source',
+title:'Assign the source of supply to the requisition',
+blocks:[
+{t:'path',tcode:['ME52N','ME57'],crumbs:['Fiori','Process Purchase Requisitions']},
+{t:'click',items:[
+ 'Open your requisition → select item 10',
+ 'Tab <k>Source of Supply</k> → button <k>Assign Source of Supply</k>',
+ 'Pick the source for supplier <v>SP-C##</v>, purchasing org <v>P0##</v>',
+ '<b>Repeat for item 20</b>',
+ '<k>Save</k>'
+]},
+{t:'co',kind:'warn',hd:'Two checks',
+ html:'If several sources are offered, take the one whose purchasing org is <v>P0##</v>. '+
+      'After saving, re-open the requisition and confirm the source fields are populated on <b>both</b> items — an unsaved assignment looks identical on screen.'}
+],
+done:'Both requisition items show supplier <v>SP-C##</v> / purchasing org <v>P0##</v> as their source.'
+},
+
+/* ============================ STEP 8 ============================ */
+{
+n:8, est:8, railTitle:'Flexible workflow CERT##',
+title:'Flexible workflow <v>CERT##</v> — <u>before</u> step 9',
+goal:'Purchase orders above 5000 EUR in purchasing org P0## created by you must be released manually.',
+blocks:[
+{t:'path',crumbs:['Fiori','Manage Workflows for Purchase Orders']},
+{t:'click',h:'8a · Create',items:['<k>New</k> / <k>Create</k>','Workflow Name <v>CERT##</v>','Description: anything','Valid From: today']},
+{t:'fields',h:'8b · Start conditions — all three',rows:[
+ ['Purchasing Organization','<b>is</b> &nbsp; <v>P0##</v>','',1],
+ ['Purchase Order Net / Overall Value','<b>greater than</b> &nbsp; <m>5000</m> <v>EUR</v>','<b>&gt;</b> not ≥',1],
+ ['Created By','<b>is</b> &nbsp; <v>TS450-##</v>','"released … by your user"',1]
+]},
+{t:'click',h:'8c · Step',items:['Step type: <k>Release of Purchase Order</k>','Recipients: <k>User</k> → <v>TS450-##</v>']},
+{t:'click',h:'8d · Activate — the step everyone forgets',items:[
+ 'Set the workflow to <b>Active</b>',
+ '<k>Save</k>',
+ 'Look at the workflow <b>list order / priority</b>. If a broad catch-all workflow sits above yours, yours may never be evaluated — move <v>CERT##</v> up if the app allows ordering.'
+]},
+{t:'co',kind:'danger',hd:'Silent killer — saved is not activated',
+ html:'An inactive workflow is indistinguishable from a working one until the purchase order fails to get blocked. '+
+      '<b>Your proof is step 9:</b> after saving the PO it <u>must</u> show <i>Release required / In Approval</i>. '+
+      'If it saves clean and ready, come straight back here and re-check the three conditions — especially <f>Created By</f> and the currency on the value condition.'},
+
+{t:'co',kind:'warn',hd:'If the order still is not blocked and your three conditions are right',
+ html:'<p>Two things outrank your workflow definition:</p>'+
+ '<ol class="st">'+
+ '<li><b>The scenario may not be switched on at all.</b> SPRO \u203a Materials Management \u203a Purchasing \u203a Purchase Order \u203a '+
+ '<b>Flexible Workflow for Purchase Orders</b> \u203a <i>Activate Flexible Workflow</i>.</li>'+
+ '<li><b>A classic release strategy may be configured for <v>ZNBF</v>.</b> Classic release and flexible workflow are alternatives. '+
+ 'If the order shows a <k>Release strategy</k> tab with a release group and code, the system is on classic release \u2014 '+
+ 'release it there and process the output. Do not spend 20 minutes fighting the framework.</li></ol>'},
+{t:'co',kind:'info',hd:'Your PO will be 27,500 EUR',
+ html:'50 × 500 + 5 × 500 = <m>27.500,00</m>, comfortably above the 5000 limit. The workflow will fire.'}
+],
+done:'<v>CERT##</v> appears in the workflow list with status <b>ACTIVE</b>.'
+},
+
+/* ============================ STEP 9 ============================ */
+{
+n:9, est:5, railTitle:'PR → PO (ZNBF)',
+title:'Convert the requisition into a purchase order, type <v>ZNBF</v>',
+blocks:[
+{t:'path',tcode:'ME21N',crumbs:['Fiori','Create Purchase Order']},
+{t:'co',kind:'danger',hd:'Set the document type FIRST',
+ html:'The document type <b>cannot be changed after the first item is entered</b>. Set <v>ZNBF</v>, tab out of the field, and only then adopt the items.'},
+{t:'fields',h:'Header',rows:[
+ ['Document type','<v>ZNBF</v>','',1],
+ ['Supplier','<v>SP-C##</v>',''],
+ ['Purchasing Org','<v>P0##</v>','',1],
+ ['Purchasing Group','<v>Z##</v>',''],
+ ['Company Code','<v>1010</v>','']
+]},
+{t:'click',h:'Adopt from your requisition',items:[
+ '<k>Document Overview On</k>',
+ 'Selection variant → <k>Purchase Requisitions</k> → enter your PR number → <k>Execute</k>',
+ 'Expand the result and <b>drag both items</b> into the purchase order (or select and click <k>Adopt</k>)'
+]},
+{t:'list',h:'Check before saving',ol:false,items:[
+ 'Both items present — 50 PC stock, 5 PC to cost center <v>T-ENG##</v>',
+ 'Plant on both items = <v>Y0##</v>',
+ 'Price <m>500,00</m> pulled from the info record — not 0, not typed by hand',
+ 'Item 20 still carries account assignment <v>K</v> + <v>T-ENG##</v>',
+ 'Purchasing group <v>Z##</v>'
+]},
+{t:'co',kind:'warn',hd:'Always adopt, never retype',
+ html:'Creating a fresh PO and typing the material in loses the requisition → order link that the grader checks.'},
+{t:'logs',items:[['po','Purchase order number','']]}
+],
+done:'A <v>ZNBF</v> purchase order exists, references your requisition, and shows a release / approval status.'
+},
+
+/* ============================ STEP 10 ============================ */
+{
+n:10, est:5, railTitle:'Release + output',
+title:'Release the purchase order and process the output',
+blocks:[
+{t:'click',h:'10a · Release',items:[
+ 'Fiori <k>My Inbox</k> → approve the workflow item as <v>TS450-##</v>',
+ '<span style="color:var(--tx3)">alternative:</span> <k>Manage Purchase Orders</k> → open the PO → <k>Release</k> / <k>Approve</k>',
+ 'Confirm the status changes to <b>Released</b>'
+]},
+{t:'click',h:'10b · Output',items:[
+ '<code>ME23N</code> → header → tab <k>Messages</k> / <k>Output</k>',
+ 'If a message record exists: select it → <k>Further data</k> → set <i>Send immediately</i> → save',
+ '<code>ME9F</code> → purchasing group <v>Z##</v> + your PO number → <k>Execute</k>',
+ 'If <b>no</b> record exists: create one — output type <v>NEU</v>, medium <v>1</v> (print) or <v>5</v>, partner function <v>VN</v> — then issue it via <code>ME9F</code>'
+]},
+{t:'co',kind:'danger',hd:'Two ways this quietly fails',
+ html:'<ul class="bl">'+
+ '<li><b>Output cannot be processed while the PO is blocked.</b> Release first.</li>'+
+ '<li>A message record that merely exists scores nothing. <code>ME23N</code> → Messages must read <b>Successfully processed</b> (green). Chase it until it is.</li></ul>'},
+
+{t:'co',kind:'info',hd:'If ME9F finds nothing, you are on the newer output framework',
+ html:'<p>S/4HANA has two output implementations and both are valid:</p>'+
+ '<table class="dc">'+
+ '<tr><th></th><th>Classic (NAST)</th><th>S/4 Output Management</th></tr>'+
+ '<tr><td>Tab on the order</td><td><k>Messages</k></td><td><k>Output</k> / <k>Output Control</k></td></tr>'+
+ '<tr><td>Issue it with</td><td><code>ME9F</code></td><td>Fiori app <b>Output Items</b>, or automatic on save</td></tr>'+
+ '<tr><td>Success reads</td><td>Successfully processed</td><td>Completed / green</td></tr></table>'}
+],
+done:'Purchase order released <b>and</b> output status green / "Successfully processed".'
+}
+],
+
+check:[
+ '<code>OX18</code>: plant <v>Y0##</v> assigned to company code <v>1010</v> · <code>OX09</code>: 101A + 101C exist under Y0##',
+ 'Plant name <v>CERT Y0##</v>, house number <v>Y0##</v>, 69226 Nussloch, country DE',
+ '<v>P0##</v> description <v>CERT P0##</v>, and <code>OX17</code> shows P0## + Y0##',
+ '<code>MM03 T-RC##</code>: price control <b>V</b>, valuation class 3000, bin <v>GR##</v>, group <v>Z##</v>, value key 1, <b>DE + EN</b> descriptions',
+ '<code>BP SP-C##</code>: General + Company Code 1010 + Purchasing Org P0## · GR-based IV ticked · planned delivery time 15',
+ '<code>ME13</code>: period 1 = <m>500,00</m> with scale 11 → <m>450,00</m>, ends 31.12 this year',
+ '<code>ME13</code>: period 2 = <m>520,00</m> with scale 11 → <m>470,00</m>, starts 01.01 next year',
+ 'Requisition: one document, two items, plant Y0##, item 20 = <v>K</v> / <v>T-ENG##</v>',
+ 'Both requisition items show source <v>SP-C##</v> / <v>P0##</v>',
+ 'Workflow <v>CERT##</v> status = <b>ACTIVE</b>',
+ 'Purchase order type <v>ZNBF</v>, created from the requisition, purch org P0##, plant Y0##',
+ 'Purchase order <b>released</b> and output <b>Successfully processed</b>'
+],
+
+outro:[
+ {t:'co',kind:'info',hd:'Next',
+  html:'<a href="task4.html" data-tasklink="task4.html">Task 4 — Procure to Pay</a> &nbsp;·&nbsp; '+
+       '<a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a> &nbsp;\u00b7&nbsp; <a href="index.html" data-tasklink="index.html">Back to the hub</a>'}
+]
+};
+CTSbuild(TASK);
+</script>
+</body>
+</html>

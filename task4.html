@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task 4 — Procure to Pay · C_TS452</title>
+<meta name="description" content="Interactive step-by-step runbook for the SAP C_TS452 practical assessment - S/4HANA Cloud Private Edition, Sourcing and Procurement.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<script src="assets/app.js"></script>
+<script>
+var TASK = {
+id:'t4', num:4, budget:25,
+title:'Procure to Pay Process',
+subtitle:'One standard P2P cycle on existing master data: requisition → source → order → output → goods receipt → parked invoice → posted invoice.',
+pills:[['7 steps'],['25 min budget','b'],['Low risk','g'],['No customizing','g'],['Fastest points in the exam','g']],
+org:[
+ ['Plant','<v>1010</v>'],
+ ['Purchasing org','<v>101C</v>'],
+ ['Purchasing group','<v>Z##</v>'],
+ ['Supplier','<v>T-SUP01</v>'],
+ ['PO document type','<v>NB</v>']
+],
+
+intro:[
+ {t:'co',kind:'ok',hd:'Do this task early',
+  html:'No configuration, no transport, all master data already exists. It is the cheapest score in the exam — bank it while the Task 3 plant copy is still running.'},
+ {t:'co',kind:'warn',hd:'Nothing here can be reordered',
+  html:'Strictly <b>1 → 2 → 3 → 4 → 5 → 6 → 7</b>. With GR-based invoice verification, step 6 is impossible before step 5.'}
+],
+
+steps:[
+/* --------- 1 --------- */
+{
+n:1, est:4, railTitle:'Purchase requisition',
+title:'Purchase requisition for <v>T-R1##</v>',
+goal:'100 pieces for stock plus 10 for the engineering cost center, on one requisition, with no source.',
+blocks:[
+{t:'co',kind:'danger',hd:'FIRST: deselect Source Determination',
+ html:'The exam repeats this Note <b>three times on a single page</b>. That is not an accident — it is the thing candidates get wrong. '+
+      'Untick it <b>before</b> entering the first item. In <code>ME51N</code> it is a header checkbox; in the Fiori app it is a toggle on the creation screen.'},
+{t:'path',tcode:'ME51N',crumbs:['Fiori','Create Purchase Requisition']},
+{t:'table',h:'One requisition, two items',cols:['','Item 10','Item 20'],rows:[
+ ['Material','<v>T-R1##</v>','<v>T-R1##</v>'],
+ ['Quantity','<v>100</v> PC &nbsp;<span style="color:var(--tx3)">(stock)</span>','<v>10</v> PC &nbsp;<span style="color:var(--tx3)">(consumption)</span>'],
+ ['Plant','<v>1010</v>','<v>1010</v>'],
+ ['Storage location','<v>101A</v> <span style="color:var(--tx3)">(or blank)</span>','—'],
+ ['Purchasing group','<v>Z##</v>','<v>Z##</v>'],
+ ['Acct assignment cat.','<i>blank</i>','<v>K</v>'],
+ ['Cost center','—','<v>T-ENG##</v>'],
+ ['G/L account','—','<i>accept the proposal</i>'],
+ ['Delivery date','today + 20 days','today + 20 days']
+]},
+{t:'co',kind:'warn',hd:'One document, not two',
+ html:'Step 2 says <i>"Show the created purchase requisition<b>s</b>"</i> — plural refers to the two <b>items</b>. Keep it as a single requisition.'},
+{t:'co',kind:'warn',hd:'If a supplier appeared by itself',
+ html:'Source determination was still on. Delete the requisition and redo it — step 2 needs to be a real action, and the grader looks for a source assigned <i>after</i> creation.'},
+{t:'logs',items:[['pr','Purchase requisition number','']]}
+],
+done:'Requisition saved, two items, and <b>no</b> source of supply on either.'
+},
+
+/* --------- 2 --------- */
+{
+n:2, est:2, railTitle:'Assign source',
+title:'Assign the source of supply',
+blocks:[
+{t:'path',tcode:['ME52N','ME57'],crumbs:['Fiori','Process Purchase Requisitions']},
+{t:'click',items:[
+ 'Open your requisition → item 10 → tab <k>Source of Supply</k> → <k>Assign Source of Supply</k>',
+ 'Pick the <b>existing</b> source for purchasing org <v>101C</v>, plant <v>1010</v> — it resolves to supplier <v>T-SUP01</v>',
+ 'Repeat for item 20',
+ '<k>Save</k>, then re-open and confirm both items carry the supplier'
+]},
+{t:'co',kind:'warn',hd:'Filter on purchasing org 101C',
+ html:'If several sources are offered, take the 101C one. A source from a different purchasing org makes the step 3 order impossible to create as specified. '+
+      '<span style="color:var(--tx3)">(You know it is T-SUP01 because step 6 names that supplier.)</span>'}
+],
+done:'Both requisition items show source <v>T-SUP01</v> / <v>101C</v>.'
+},
+
+/* --------- 3 --------- */
+{
+n:3, est:4, railTitle:'PR → PO (NB)',
+title:'Convert the requisition into a purchase order, type <v>NB</v>',
+blocks:[
+{t:'path',tcode:'ME21N',crumbs:['Fiori','Create Purchase Order']},
+{t:'co',kind:'danger',hd:'Set the document type FIRST',
+ html:'It cannot be changed once the first item is entered. Set <v>NB</v>, tab out, then adopt.'},
+{t:'fields',h:'Header',rows:[
+ ['Document type','<v>NB</v>','',1],
+ ['Supplier','<v>T-SUP01</v>',''],
+ ['Purchasing Org','<v>101C</v>','',1],
+ ['Purchasing Group','<v>Z##</v>','',1],
+ ['Company Code','<v>1010</v>','']
+]},
+{t:'click',h:'Adopt the items',items:[
+ '<k>Document Overview On</k>',
+ 'Selection variant → <k>Purchase Requisitions</k> → your PR number → <k>Execute</k>',
+ 'Expand and <b>drag both items</b> into the order'
+]},
+{t:'list',h:'Check before saving',ol:false,items:[
+ 'Both items — 100 PC and 10 PC',
+ 'Plant <v>1010</v> on both',
+ 'Item 20 still carries <v>K</v> / <v>T-ENG##</v>',
+ 'Purchasing group <v>Z##</v>',
+ 'Net price populated from the info record'
+]},
+{t:'co',kind:'warn',hd:'Adopt, never retype',html:'The requisition → order link is checked by the grader.'},
+{t:'logs',items:[['po','Purchase order number','needed in steps 4, 5, 6']]}
+],
+done:'Purchase order type <v>NB</v> exists, references your requisition, purchasing org 101C, plant 1010.'
+},
+
+/* --------- 4 --------- */
+{
+n:4, est:3, railTitle:'Process output',
+title:'Process the output',
+blocks:[
+{t:'click',items:[
+ '<code>ME23N</code> → tab <k>Messages</k> / <k>Output</k>',
+ 'Record present → select it → <k>Further data</k> → <i>Send immediately</i> → save',
+ '<code>ME9F</code> → purchasing group <v>Z##</v> + your PO number → <k>Execute</k>',
+ 'No record present → create output type <v>NEU</v>, medium <v>1</v> (print) or <v>5</v>, partner function <v>VN</v>, then issue via <code>ME9F</code>'
+]},
+{t:'co',kind:'info',hd:'Why the exam names Z## here',
+ html:'<i>"Use your purchasing group Z##"</i> is the selection criterion in <code>ME9F</code> — and a free check that your order actually carries <v>Z##</v>. '+
+      'If <code>ME9F</code> finds nothing under Z##, your purchase order has the wrong purchasing group. Fix the order, then re-issue.'},
+{t:'co',kind:'danger',hd:'Green or it did not happen',
+ html:'<code>ME23N</code> → Messages must read <b>Successfully processed</b>. A yellow / not-processed record scores nothing.'},
+
+{t:'co',kind:'info',hd:'If ME9F returns "no suitable purchase orders found"',
+ html:'The order exists and carries <v>Z##</v>, but the system is on <b>S/4 Output Management</b> rather than classic message control. '+
+ 'Use the order\u2019s <k>Output</k> tab and the Fiori <b>Output Items</b> app instead of <code>ME9F</code>; success reads <i>Completed</i> / green.'}
+],
+done:'Output status is green / <b>Successfully processed</b>.'
+},
+
+/* --------- 5 --------- */
+{
+n:5, est:4, railTitle:'Goods receipt + header text',
+title:'Post the goods receipt',
+blocks:[
+{t:'path',tcode:'MIGO',crumbs:['Fiori','Post Goods Receipt for Purchasing Document']},
+{t:'fields',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Purchase Order</v>',''],
+ ['PO number','your Task 4 order',''],
+ ['Movement type','<v>101</v>','set automatically'],
+ ['Material / Plant','<v>T-R1##</v> / <v>1010</v>',''],
+ ['Storage location','<v>101A</v>','or whatever the order proposes'],
+ ['Item OK','☑ on <b>both</b> lines','']
+]},
+{t:'click',h:'The header text — do not miss this',items:[
+ 'Go to the <b>header</b> area (top of MIGO), tab <k>General</k>',
+ 'Field <f>Document Header Text</f> → <v>C##-GR1</v>',
+ '<k>Check</k> → <k>Post</k>'
+]},
+{t:'co',kind:'danger',hd:'It is the HEADER text, not the item text',
+ html:'<f>Document Header Text</f> lives on the <b>header</b> General tab. Filling <f>Delivery Note</f> or <f>Bill of Lading</f> instead is a different field and scores nothing.'},
+{t:'co',kind:'warn',hd:'Post the full quantity',
+ html:'Both items, 100 + 10. A partial receipt breaks the invoice arithmetic in step 6. '+
+      '<span style="color:var(--tx3)">The exam warns <i>"Be aware that your PO’s document type is NB"</i> — if a search finds nothing, you are filtering on the wrong type.</span>'},
+{t:'logs',items:[['gr','GR material document number','']]}
+],
+done:'Material document posted for both items with header text <v>C##-GR1</v>.'
+},
+
+/* --------- 6 --------- */
+{
+n:6, est:4, railTitle:'PARK the invoice',
+title:'Park the invoice — do <u>not</u> post it',
+goal:'Record the supplier invoice with an unexplained 66 EUR of freight still outstanding.',
+blocks:[
+{t:'co',kind:'danger',hd:'Use MIR7. MIRO would post it.',
+ html:'In <code>MIR7</code> the <k>Save</k> button <b>parks</b> the document. Do not click <k>Post</k>. '+
+      'If you post here, step 7 has nothing to do and both steps score wrong.'},
+{t:'path',tcode:'MIR7',crumbs:['Fiori','Park Supplier Invoice']},
+{t:'fields',h:'Basic data tab',rows:[
+ ['Invoice date / Posting date','today',''],
+ ['Reference','<v>C##-INV1</v>','',1],
+ ['Amount','<m>730,29</m>','seven hundred thirty euros, 29 cents',1],
+ ['Currency','<v>EUR</v>',''],
+ ['Calculate tax','☑',''],
+ ['Tax code','<i>the one from the order</i>','']
+]},
+{t:'click',h:'Reference the purchase order',items:[
+ 'Category: <k>Purchase Order / Scheduling Agreement</k>',
+ 'Enter your Task 4 order number → <k>Enter</k>',
+ 'Both items populate — 100 PC and 10 PC of <v>T-R1##</v>'
+]},
+{t:'co',kind:'ok',hd:'The red balance of about 66 is CORRECT',
+ html:'That is the unclarified transportation cost. <b>Leave it.</b> Do not force it to zero yet — that is step 7.'},
+{t:'click',items:['<k>Save</k> — this parks the document. Write the number down.']},
+{t:'logs',items:[['inv','Parked invoice number','same number gets posted in step 7']]}
+],
+done:'Invoice exists with status <b>Parked</b>, reference <v>C##-INV1</v>, balance about 66.'
+},
+
+/* --------- 7 --------- */
+{
+n:7, est:4, railTitle:'Change + post invoice',
+title:'Change the parked invoice and post it',
+goal:'Add the now-accepted transportation cost to the purchase order and bring the balance to zero.',
+blocks:[
+{t:'path',tcode:['MIR4','MIR6'],crumbs:['Fiori','Manage Supplier Invoices']},
+{t:'click',items:[
+ '<code>MIR4</code> → your parked invoice number → switch to <b>change</b> mode (pencil, or <k>Document</k> → <k>Change</k>)',
+ '<span style="color:var(--tx3)">alternative:</span> <code>MIR6</code> → filter status <i>Parked</i> → open yours',
+ 'Go to tab <k>Details</k> → field <f>Unplanned Delivery Costs</f>'
+]},
+{t:'co',kind:'jud',hd:'Judgment call — enter the NET freight, not 66',
+ html:'<p>The exam gives <m>730,29</m> as the total <b>including</b> tax and <m>66,00</m> as freight <b>including</b> tax. '+
+ 'The <f>Unplanned Delivery Costs</f> field is a <b>net</b> field, and with <i>Calculate tax</i> on, SAP adds tax on top of whatever you type. '+
+ 'Type 66 and the balance overshoots.</p>'+
+ '<table class="dc"><tr><th>If the order’s tax rate is</th><th>Enter</th></tr>'+
+ '<tr><td>10 %</td><td><m>60,00</m> &nbsp;<span style="color:var(--tx3)">(66 ÷ 1.10)</span></td></tr>'+
+ '<tr><td>19 %</td><td><m>55,46</m> &nbsp;<span style="color:var(--tx3)">(66 ÷ 1.19)</span></td></tr></table>'},
+{t:'list',h:'The method that always works — do not guess the tax rate',items:[
+ 'Type a first guess: <m>60,00</m>',
+ 'Press <k>Enter</k> and read the <f>Balance</f> field',
+ 'Adjust the unplanned delivery cost by exactly the remaining balance',
+ 'Repeat until <f>Balance</f> reads <b>0,00</b>',
+ 'A zero balance is your proof that the number was right'
+]},
+{t:'click',items:['Balance <b>0,00</b> → <k>Post</k>']},
+{t:'co',kind:'danger',hd:'Do not create a new invoice',
+ html:'You must change <b>the parked one</b> and post it. The posted document number should be the same one you wrote down in step 6.'},
+{t:'co',kind:'info',hd:'"post the transportation costs to the purchase order"',
+ html:'Leave the standard configuration alone — unplanned delivery costs are <b>distributed across the invoice items</b> and therefore onto the order and material value. '+
+      'Do not go hunting for a separate freight G/L line.'},
+
+{t:'co',kind:'warn',hd:'If the order value does not move after posting',
+ html:'The company code may be configured to book unplanned delivery costs to a <b>separate G/L account</b> instead of distributing them. '+
+ 'Check SPRO \u203a Materials Management \u203a Logistics Invoice Verification \u203a Incoming Invoice \u203a '+
+ '<b>Configure How Unplanned Delivery Costs Are Posted</b> \u2014 for company code <v>1010</v> it should read <i>distribute among invoice items</i>.'},
+{t:'logs',items:[['invp','Posted invoice number','should equal the parked number']]}
+],
+done:'The document from step 6 now shows status <b>Posted</b> with balance 0,00.'
+}
+],
+
+check:[
+ 'Requisition: one document, two items (100 stock + 10 to <v>T-ENG##</v>), plant 1010, <v>Z##</v>, no source at creation',
+ 'Source <v>T-SUP01</v> / <v>101C</v> assigned to <b>both</b> items',
+ 'Purchase order type <v>NB</v>, purchasing org 101C, plant 1010, created <b>from</b> the requisition',
+ '<code>ME23N</code> → Messages → <b>Successfully processed</b>',
+ 'Goods receipt posted, both items, header text <v>C##-GR1</v>',
+ 'Invoice was <b>parked</b> with reference <v>C##-INV1</v> and amount <m>730,29</m>',
+ 'The <b>same</b> invoice was changed (unplanned delivery costs) and <b>posted</b>, balance 0,00'
+],
+
+outro:[
+ {t:'table',h:'Quick troubleshooting',cols:['Problem','Fix'],rows:[
+  ['Balance will not reach 0','Your amount or the net freight is wrong. Re-check <m>730,29</m> and re-derive the freight from the balance actually shown.'],
+  ['&quot;Document contains no items&quot;','Wrong order number, or step 5 was never posted — with GR-based invoice verification, no goods receipt means no invoice line.'],
+  ['<code>ME9F</code> finds nothing','The purchase order does not carry purchasing group <v>Z##</v>, or no output record was generated.'],
+  ['Cannot change the parked invoice','You are in <code>MIR4</code> display mode. Click the pencil, or <k>Document</k> → <k>Change</k>.'],
+  ['Invoice posted instead of parked','Create it again with <code>MIR7</code> and <k>Save</k>. The newest document is the graded one.']
+ ]},
+ {t:'co',kind:'info',hd:'Next',
+  html:'<a href="task3.html" data-tasklink="task3.html">Task 3 — Configuration &amp; Master Data</a> &nbsp;·&nbsp; '+
+       '<a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a> &nbsp;\u00b7&nbsp; <a href="index.html" data-tasklink="index.html">Back to the hub</a>'}
+]
+};
+CTSbuild(TASK);
+</script>
+</body>
+</html>

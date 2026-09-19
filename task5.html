@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task 5 — Subcontracting · C_TS452</title>
+<meta name="description" content="Interactive step-by-step runbook for the SAP C_TS452 practical assessment - S/4HANA Cloud Private Edition, Sourcing and Procurement.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<script src="assets/app.js"></script>
+<script>
+var TASK = {
+id:'t5', num:5, budget:30,
+title:'Perform a Subcontracting Process',
+subtitle:'A subcontractor builds your product. One component is shipped to them directly by a second supplier. Then invoice tolerance is configured so small over-charges reduce themselves.',
+pills:[['7 steps'],['30 min budget','b'],['Two config chains','r'],['Needs SPRO + transport','r']],
+org:[
+ ['Plant','<v>1010</v>'],
+ ['Purchasing org','<v>101C</v>'],
+ ['Purchasing group','<v>Z##</v>'],
+ ['PO document type','<v>NB</v>'],
+ ['Transport request','<v>C_TS452_##</v>']
+],
+
+intro:[
+ {t:'co',kind:'danger',hd:'Keep the two suppliers apart — this is where the task usually goes wrong',
+  html:'<table class="dc">'+
+  '<tr><th>Who</th><th>Number</th><th>Role</th></tr>'+
+  '<tr><td><b>Subcontractor</b></td><td><v>T-S50A##</v></td><td>builds <v>T-FL4A##</v> for you</td></tr>'+
+  '<tr><td><b>Component supplier</b></td><td><v>T-S52A##</v></td><td>ships <v>T-FL4A1##</v> <b>straight to the subcontractor</b>, and sends the invoice in step 7</td></tr>'+
+  '<tr><td>Your plant</td><td><v>1010</v> / <v>101A</v></td><td>supplies all the other components</td></tr></table>'+
+  '<p style="margin-top:8px"><b>T-S5<u>0</u>A = the one who builds. T-S5<u>2</u>A = the one who ships the part.</b></p>'},
+
+ {t:'co',kind:'danger',hd:'Do step 6 BEFORE step 7 — non-negotiable',
+  html:'Step 6 creates the tolerance that automatically reduces a small over-charge. Step 7 posts the invoice that relies on it. '+
+       '<b>Automatic invoice reduction is only evaluated at the moment of posting.</b> Configure first, post second. '+
+       'There is no way to retro-fit it onto an invoice you already posted.'},
+
+ {t:'co',kind:'info',hd:'Safe execution order',
+  html:'<b>1 → 2 → 3 → 4 → 5 → 6 → 7.</b> If you are short on time, step 6 (the config) is worth doing even if you never reach step 7.'}
+],
+
+steps:[
+/* ---------------- 1 ---------------- */
+{
+n:1, est:5, railTitle:'Subcontracting PO',
+title:'Purchase order to the subcontractor — item category <v>L</v>',
+goal:'100 pieces of T-FL4A## from T-S50A##, as a subcontracting item so the component list explodes.',
+blocks:[
+{t:'path',tcode:'ME21N',crumbs:['Fiori','Create Purchase Order']},
+{t:'fields',h:'Header',rows:[
+ ['Document type','<v>NB</v>','',1],
+ ['Supplier','<v>T-S50A##</v>','the one who BUILDS',1],
+ ['Purchasing Org','<v>101C</v>',''],
+ ['Purchasing Group','<v>Z##</v>',''],
+ ['Company Code','<v>1010</v>','']
+]},
+{t:'fields',h:'Item 10',rows:[
+ ['Item category','<v>L</v>','subcontracting — type it BEFORE pressing Enter',1],
+ ['Material','<v>T-FL4A##</v>',''],
+ ['Quantity','<v>100</v> PC',''],
+ ['Net price','<m>1500,00</m>',''],
+ ['Plant','<v>1010</v>',''],
+ ['Storage location','<v>101A</v>',''],
+ ['Delivery date','today + 20 days','']
+]},
+{t:'co',kind:'danger',hd:'Item category L is the whole step',
+ html:'With <v>L</v>, SAP explodes the bill of material and opens a <b>component screen</b> listing the parts the subcontractor needs. '+
+      'Without it you have an ordinary purchase order and <b>every later step in this task fails</b>. '+
+      'Enter the item category before you press Enter on the item line — it is awkward to change afterwards.'},
+
+{t:'co',kind:'warn',hd:'If no component screen appears',
+ html:'<ol class="st">'+
+ '<li>Check the item category column actually reads <v>L</v> \u2014 not what you meant to type.</li>'+
+ '<li>Check the material has a <b>bill of material for plant 1010</b>: <code>CS03</code>, material <v>T-FL4A##</v>, plant <v>1010</v>, BOM usage 1 or 3.</li>'+
+ '<li>If there genuinely is no BOM, <b>add the component by hand</b> on the component screen \u2014 enter <v>T-FL4A1##</v> with the quantity the task implies. The process still posts.</li></ol>'},
+{t:'co',kind:'warn',hd:'Write down the component list before you leave this screen',
+ html:'<p>After pressing Enter on the item, SAP shows the components. Note which ones there are — step 3 depends on it.</p>'+
+ '<ul class="bl">'+
+ '<li><v>T-FL4A1##</v> → arrives via the <b>direct delivery</b> (steps 2 and 4). <b>Do not</b> issue it from your own stock.</li>'+
+ '<li>Every other component → issued from plant <v>1010</v> / <v>101A</v> in step 3.</li></ul>'},
+{t:'logs',items:[['po1','Subcontracting PO number',''],['comp','Components seen on the PO','e.g. T-FL4A1##, ...']]}
+],
+done:'Purchase order type NB for T-S50A## exists with item category <v>L</v> and a visible component list.'
+},
+
+/* ---------------- 2 ---------------- */
+{
+n:2, est:5, railTitle:'Component PO — SC Vendor',
+title:'Component purchase order with <u>direct delivery</u> to the subcontractor',
+goal:'200 pieces of T-FL4A1## bought from T-S52A## but delivered to T-S50A##, so the receipt lands in stock provided to vendor.',
+blocks:[
+{t:'path',tcode:'ME21N',crumbs:['Fiori','Create Purchase Order']},
+{t:'co',kind:'info',hd:'This is a second, separate purchase order',html:'Do not add it as an item on the step 1 order.'},
+{t:'fields',h:'Header',rows:[
+ ['Document type','<v>NB</v>',''],
+ ['Supplier','<v>T-S52A##</v>','the one who SHIPS the part',1],
+ ['Purchasing Org','<v>101C</v>',''],
+ ['Purchasing Group','<v>Z##</v>','']
+]},
+{t:'fields',h:'Item 10',rows:[
+ ['Item category','<i>blank</i>','standard — <b>not</b> L this time',1],
+ ['Material','<v>T-FL4A1##</v>',''],
+ ['Quantity','<v>200</v> PC',''],
+ ['Net price','<m>500,00</m>',''],
+ ['Plant','<v>1010</v>',''],
+ ['Delivery date','today + 10 days','']
+]},
+{t:'click',h:'THE CRITICAL FIELD',items:[
+ 'Open the <b>item detail</b> (lower half of the screen)',
+ 'Go to tab <k>Delivery Address</k>',
+ 'Find <f>SC Vendor</f> &nbsp;<span style="color:var(--tx3)">(Subcontractor)</span> and enter <v>T-S50A##</v>',
+ '<b>Watch the address block change to the subcontractor’s address</b> — that change is your confirmation'
+]},
+{t:'co',kind:'danger',hd:'Silent killer — without SC Vendor the whole task scores wrong',
+ html:'<p>This field tells SAP the goods go straight to the subcontractor, so the goods receipt in step 4 posts into '+
+      '<b>stock provided to vendor (special stock O)</b> instead of your own plant stock.</p>'+
+      '<p>Leave it blank and everything still saves, nothing errors, and the entire subcontracting scenario is graded as wrong. '+
+      'In some releases the field sits next to a checkbox in the address block — look for the label <b>SC Vendor</b>.</p>'},
+{t:'logs',items:[['po2','Component PO number','']]}
+],
+done:'Re-opening the purchase order shows <k>Delivery Address</k> → <f>SC Vendor</f> = <v>T-S50A##</v>.'
+},
+
+/* ---------------- 3 ---------------- */
+{
+n:3, est:5, railTitle:'Goods issue to subcontractor',
+title:'Goods issue of the components you provide',
+goal:'Move your own components from 1010 / 101A into the subcontractor’s stock, topping up first if short.',
+blocks:[
+{t:'path',h:'3a · See what is actually needed and available',tcode:'ME2O',
+ crumbs:['Fiori','Monitor Stocks of Material Provided to Vendor']},
+{t:'click',items:['Supplier <v>T-S50A##</v>, Plant <v>1010</v> → <k>Execute</k>','Read the requirement and the stock already at the subcontractor, per component']},
+
+{t:'co',kind:'warn',hd:'3b · Only if stock is short — movement 501',
+ html:'The exam says: <i>"If stock is deficient, post a goods receipt others (movement type 501) for the missing components in the quantity of <b>500 pc each</b>."</i> '+
+      'That is 500 <b>per component</b>, not 500 in total.'},
+{t:'path',tcode:'MIGO'},
+{t:'fields',h:'MIGO settings for the top-up',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Other</v>','no purchase order exists',1],
+ ['Movement type','<v>501</v>','',1],
+ ['Material','the short component',''],
+ ['Quantity','<v>500</v> PC','repeat per component',1],
+ ['Plant / Storage location','<v>1010</v> / <v>101A</v>','']
+]},
+{t:'co',kind:'warn',hd:'If the 501 errors on valuation',html:'The material has no price. <code>MM02</code> → Accounting 1 → set a moving average price, then retry.'},
+
+{t:'click',h:'3c · Post the goods issue — movement 541',items:[
+ '<b>Easiest:</b> from <code>ME2O</code>, select the component lines → <k>Post Goods Issue</k>',
+ '<span style="color:var(--tx3)">alternative:</span> <code>MIGO</code> → Goods Issue → Purchase Order → your step 1 PO → movement <v>541</v>',
+ '<span style="color:var(--tx3)">alternative:</span> <code>MB1B</code> → movement <v>541</v>, special stock <v>O</v>, vendor <v>T-S50A##</v>'
+]},
+{t:'co',kind:'jud',hd:'Judgment call — exclude T-FL4A1## from the 541',
+ html:'<p>The exam issues components that are <i>"available in plant 1010 and storage location 101A"</i>, then handles <v>T-FL4A1##</v> separately in step 4 via the direct delivery.</p>'+
+      '<p><b>Recommendation: do not issue <v>T-FL4A1##</v> from your own stock.</b> Doing so would double-supply the subcontractor and contradict the entire reason the direct-delivery order exists.</p>'+
+      '<p><b>Exception:</b> if <code>ME2O</code> shows <v>T-FL4A1##</v> as the <u>only</u> component in the bill of material, issue it too. Check before you decide.</p>'},
+{t:'logs',items:[['gi501','501 document (if used)',''],['gi541','541 goods issue document','']]}
+],
+done:'<code>ME2O</code> shows the components you provide sitting as stock at <v>T-S50A##</v>.'
+},
+
+/* ---------------- 4 ---------------- */
+{
+n:4, est:3, railTitle:'GR direct delivery',
+title:'Goods receipt for the directly delivered component',
+blocks:[
+{t:'path',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Purchase Order</v>',''],
+ ['PO number','your <b>step 2</b> order (<v>T-S52A##</v>)','not the step 1 order',1],
+ ['Quantity','<v>200</v> PC',''],
+ ['Item OK','☑','']
+]},
+{t:'click',items:['<k>Check</k> → <k>Post</k>']},
+{t:'co',kind:'danger',hd:'Verify NOW — this is your SC Vendor proof',
+ html:'<p>Before moving on, check the item’s <k>Where</k> tab during entry, or run <code>MMBE</code> for <v>T-FL4A1##</v> straight after:</p>'+
+ '<ul class="bl">'+
+ '<li>✓ Stock shows under <b>Stock Provided to Vendor</b> / special stock <b>O</b> at <v>T-S50A##</v></li>'+
+ '<li>✗ <b>Not</b> unrestricted stock in plant 1010</li></ul>'+
+ '<p>If it landed in plant stock, the SC Vendor field in step 2 was never set. '+
+ '<b>Cancel the goods receipt (<code>MIGO</code> → Cancel), fix the purchase order, re-post.</b> '+
+ 'Three minutes here; an unrecoverable fail if you leave it.</p>'},
+{t:'logs',items:[['gr2','GR material document (component)','']]}
+],
+done:'200 PC of <v>T-FL4A1##</v> sit in stock provided to vendor at <v>T-S50A##</v>.'
+},
+
+/* ---------------- 5 ---------------- */
+{
+n:5, est:5, railTitle:'GR product + extra 2',
+title:'Goods receipt of the finished product, plus 2 extra components consumed',
+blocks:[
+{t:'path',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Purchase Order</v>',''],
+ ['PO number','your <b>step 1</b> order (<v>T-S50A##</v>, item category L)','',1],
+ ['Quantity','<v>100</v> PC',''],
+ ['Plant / Storage location','<v>1010</v> / <v>101A</v>','',1]
+]},
+{t:'click',h:'The extra 2 pieces — do this BEFORE posting',items:[
+ 'Select the item line, then open its <b>component detail</b> in the lower area &nbsp;<span style="color:var(--tx3)">(expand arrow on the item, or the Subcontracting / Material tab)</span>',
+ 'Find <v>T-FL4A1##</v> in the component list',
+ '<b>Increase its quantity by 2</b> over the proposed consumption',
+ '<k>Check</k> → <k>Post</k>'
+]},
+{t:'co',kind:'info',hd:'What is actually happening',
+ html:'<i>"Post an additional consumption of 2 pieces from product T-FL4A1## as the supplier consumed two more"</i> — '+
+      'an <b>over-consumption of the component</b>, recorded on the same goods receipt. The component consumption posts as movement <v>543</v>.'},
+{t:'co',kind:'warn',hd:'If you already posted without the extra 2',
+ html:'Do <b>not</b> cancel the receipt. Use <code>MIGO</code> → <k>Subsequent Adjustment</k> → <k>Purchase Order</k> (your step 1 order) and enter <b>+2</b> for <v>T-FL4A1##</v>. '+
+      'That is the correct correction path and it scores.'},
+{t:'logs',items:[['gr1','GR material document (product)','']]}
+],
+done:'100 PC of <v>T-FL4A##</v> are in 1010 / 101A and the consumption of <v>T-FL4A1##</v> is 2 higher than the bill of material proposed.'
+},
+
+/* ---------------- 6 ---------------- */
+{
+n:6, est:8, railTitle:'Tolerance group C## (config chain)',
+title:'Tolerance group <v>C##</v> — the full config chain',
+goal:'Invoices from T-S52A## that over-charge by up to EUR 50 must be reduced automatically, with no manual work.',
+blocks:[
+
+{t:'co',kind:'danger',hd:'This step has THREE parts, not one — that is why it blocks people',
+ html:'<table class="dc">'+
+ '<tr><th>Part</th><th>What it does</th><th>Skip it and…</th></tr>'+
+ '<tr><td><b>6a</b> · FI tolerance group <code>OBA3</code></td><td>makes the key <v>C##</v> exist at all</td><td>the supplier master <b>refuses</b> your entry</td></tr>'+
+ '<tr><td><b>6b</b> · Vendor-specific tolerance</td><td>sets the EUR 50 auto-reduction limit</td><td>nothing is ever reduced</td></tr>'+
+ '<tr><td><b>6c</b> · Assign to the supplier</td><td>connects the two</td><td>the limit applies to nobody</td></tr>'+
+ '</table>'},
+
+{t:'deep',open:true,title:'DEEP DIVE — tolerance configuration, the complete chain',
+ sub:'including the prerequisite that is not in the exam text',blocks:[
+
+ {t:'co',kind:'warn',hd:'6a · The prerequisite nobody mentions — do this FIRST',
+  html:'<p>The <f>Tolerance Group</f> field in the supplier master is validated against the <b>FI tolerance group</b> table. '+
+  'If <v>C##</v> does not exist there, step 6c fails with:</p>'+
+  '<p style="font-family:var(--mono);font-size:13px;background:var(--bg2);padding:8px 11px;border-radius:6px">'+
+  '&quot;Entry <b>C##</b> does not exist in T043G – check your entry&quot;</p>'+
+  '<p>That error is almost certainly what stopped you last practice. Create the FI tolerance group first and the rest flows.</p>'},
+
+ {t:'path',h:'6a · Create the FI tolerance group',tcode:'OBA3',
+  crumbs:['SPRO','Financial Accounting','Accounts Receivable and Accounts Payable','Business Transactions','Outgoing Payments','Manual Outgoing Payments','Define Tolerances (Vendors)']},
+ {t:'click',items:[
+  '<k>New Entries</k>',
+  'Company Code <v>1010</v>, Tolerance Group <v>C##</v>, Currency <v>EUR</v>',
+  'Leave the permitted-payment-difference values at zero — you only need the key to exist',
+  '<k>Save</k> to transport <v>C_TS452_##</v>'
+ ]},
+ {t:'co',kind:'info',hd:'Same view, two SPRO paths',
+  html:'The equivalent path under <i>Incoming Payments → Manual Incoming Payments → Define Tolerance Groups for Customers/Vendors</i> opens the same table. Either is fine.'},
+
+ {t:'path',h:'6b · Create the vendor-specific tolerance (the EUR 50 rule)',
+  crumbs:['SPRO','Materials Management','Logistics Invoice Verification','Incoming Invoice','Configure Vendor-Specific Tolerances']},
+ {t:'click',items:[
+  '<k>New Entries</k>',
+  'Company Code <v>1010</v>, Tolerance Group <v>C##</v>, Currency <v>EUR</v>, any description',
+  'Now set the limits — see the table below very carefully',
+  '<k>Save</k> to transport <v>C_TS452_##</v>'
+ ]},
+ {t:'fields',h:'The limit block — this is the part that decides whether it works',rows:[
+  ['Automatic invoice reduction &rarr; <b>Check limit</b>','☑ <b>active</b>','',1],
+  ['Automatic invoice reduction &rarr; <b>Value / upper limit</b>','<m>50,00</m>','= "deviations of up to EUR 50"',1],
+  ['Negative small differences','<b>leave inactive</b>','see the warning below',1],
+  ['Positive small differences','<b>leave inactive</b>','see the warning below',1],
+  ['Automatic acceptance of positive differences','<b>leave inactive</b>','see the warning below',1]
+ ]},
+ {t:'co',kind:'danger',hd:'Why the other three limits must stay inactive',
+  html:'<p>For a positive difference (invoice higher than expected) SAP walks the limits <b>in order</b> and stops at the first one that covers the amount:</p>'+
+  '<ol class="st">'+
+  '<li><b>Positive small differences</b> → the difference is simply posted away. <span style="color:var(--dgr)">No reduction.</span></li>'+
+  '<li><b>Automatic acceptance</b> → the invoice is accepted as it stands. <span style="color:var(--dgr)">No reduction.</span></li>'+
+  '<li><b>Automatic invoice reduction</b> → <span style="color:var(--ok)">this is the one you want.</span></li>'+
+  '<li>Beyond all of them → blocked or rejected.</li>'+
+  '</ol>'+
+  '<p>If either of the first two is active with a limit of 30 or more, your 30 EUR difference is swallowed there and <b>invoice reduction never happens</b> — '+
+  'the invoice posts, nothing errors, and the step is graded wrong. Activate <b>only</b> the invoice-reduction limit.</p>'},
+
+ {t:'path',h:'6c · Assign the group to supplier T-S52A##',tcode:'BP',
+  crumbs:['Fiori','Maintain Business Partner']},
+ {t:'click',items:[
+  'Open <v>T-S52A##</v>',
+  'Switch to role <k>FI Vendor</k> &nbsp;<span style="color:var(--tx3)">(FLVN00)</span>',
+  'Click the <k>Company Code</k> button → <v>1010</v>',
+  'Open tab <k>Vendor: Payment Transactions</k>',
+  'Field <f>Tolerance Group</f> → <v>C##</v>',
+  '<k>Save</k>'
+ ]},
+ {t:'co',kind:'warn',hd:'If the field is not on that tab',
+  html:'Check <k>Vendor: Account Management</k> instead — the position moves between releases. It is always inside the <b>company code</b> segment of the FI Vendor role, never in the purchasing segment.'},
+ {t:'co',kind:'danger',hd:'Assign it to T-S52A##, not T-S50A##',
+  html:'<v>T-S52A##</v> is the supplier who sends the invoice in step 7. Putting the tolerance on the subcontractor achieves nothing.'},
+
+ {t:'table',h:'Tolerance troubleshooting — symptom → cause → fix',cols:['What you see','What it means / what to do'],rows:[
+  ['&quot;Entry C## does not exist in T043G&quot; when saving the supplier','<b>Step 6a was skipped.</b> Create the FI tolerance group in <code>OBA3</code> for company code 1010, then return to the supplier.'],
+  ['Tolerance group saves on the vendor, but the invoice is not reduced','Either 6b was never done, or one of the <i>small difference</i> / <i>automatic acceptance</i> limits is active and absorbed the difference first.'],
+  ['&quot;Account determination for entry … RKA … not possible&quot;','The invoice-reduction clearing account is missing. <code>OBYC</code> → transaction key <b>RKA</b> → assign a G/L account for the chart of accounts. Rare on a Best Practice system, but this is the fix.'],
+  ['The difference is posted to a small-difference account instead of a credit memo','Tolerance key <b>BD</b> in <code>OMR6</code> (company code 1010) has a limit larger than the deviation. Lower it, or accept that the exam system is configured that way and note it.'],
+  ['You cannot find the SPRO node','Use the SPRO <b>Find</b> icon and search for <i>vendor-specific tolerance</i>. Node names shift slightly between releases.'],
+  ['Nothing happens and there is no message at all','The supplier on the invoice is not the one you assigned the group to. Check you used <v>T-S52A##</v>.']
+ ]},
+
+ {t:'co',kind:'ok',hd:'Proof that step 6 is complete',
+  html:'Re-open <code>BP T-S52A##</code> → FI Vendor → Company Code 1010 and <b>see <v>C##</v> sitting in the Tolerance Group field</b>. '+
+       'That single check proves all three parts landed.'}
+]},
+
+{t:'logs',items:[['tol','Tolerance group','C##'],['tolok','Assigned to T-S52A## ? (y/n)','']]}
+],
+done:'<code>BP T-S52A##</code> → company code 1010 shows tolerance group <v>C##</v>, and that group carries an active automatic-invoice-reduction limit of <m>50,00</m>.'
+},
+
+/* ---------------- 7 ---------------- */
+{
+n:7, est:4, railTitle:'Post invoice C##-INV2',
+title:'Post the invoice for the direct delivery',
+goal:'Post the T-S52A## invoice with the stated total and let your tolerance group absorb the small over-charge.',
+blocks:[
+{t:'path',tcode:'MIRO',crumbs:['Fiori','Create Supplier Invoice']},
+{t:'co',kind:'info',hd:'This one is posted, not parked',html:'Task 4 needed <code>MIR7</code> (park). This one is a straight <code>MIRO</code> post.'},
+{t:'fields',rows:[
+ ['Invoice date / Posting date','today',''],
+ ['Reference','<v>C##-INV2</v>','',1],
+ ['Amount','<m>110030,00</m>','one hundred ten thousand and thirty',1],
+ ['Currency','<v>EUR</v>',''],
+ ['Calculate tax','☑',''],
+ ['PO reference','your <b>step 2</b> order (<v>T-S52A##</v>)','not the step 1 order',1]
+]},
+{t:'click',items:['Press <k>Enter</k> — the 200 PC line populates','Read the balance','<k>Post</k>']},
+
+{t:'co',kind:'danger',hd:'110.030,-- means 110030,00',
+ html:'Not 110,03. Not 110.03. <b>One hundred ten thousand and thirty euros.</b> '+
+      'Use the copy chip above — it is already formatted for the decimal notation you selected in the top bar.'},
+
+{t:'co',kind:'ok',hd:'What a correct result looks like',
+ html:'<p>The purchase order is 200 × 500 = <m>100.000,00</m> net. With tax the expected total sits very close to <m>110.030,00</m>, '+
+ 'and the small remainder falls inside your EUR 50 limit.</p>'+
+ '<p><b>A message about invoice reduction is good news</b> — it is the proof that step 6 worked. '+
+ 'SAP posts the expected value to the supplier account and books the difference separately, creating a complaint / credit-memo document alongside the invoice.</p>'},
+
+{t:'table',h:'Reading the balance — what to do',cols:['Balance shown','Meaning → action'],rows:[
+ ['<b>0,00</b> and an invoice-reduction message','Perfect. Post.'],
+ ['A small amount, tens of euros','Expected. Adjust the <b>item</b> amount to the vendor’s figure so the balance clears, then post — the item variance is what triggers the automatic reduction.'],
+ ['Thousands of euros','<b>Wrong purchase order.</b> You are probably on the step 1 subcontracting order. Use the step 2 order from <v>T-S52A##</v>.'],
+ ['Small amount that will not clear and no reduction message','Step 6 is not effective. Go back: is <v>C##</v> assigned to <v>T-S52A##</v>? Is the auto-reduction limit active? Are the small-difference limits switched off?']
+]},
+{t:'co',kind:'warn',hd:'Post only one invoice',
+ html:'If you have to retry, remember the <b>newest document is the one graded</b> — so make sure the newest one is the correct one.'},
+
+{t:'co',kind:'info',hd:'How to actually SEE the reduction \u2014 and the manual fallback',
+ html:'<p>The columns that show invoice reduction live in a different <b>item list layout</b>. In <code>MIRO</code>, switch the item list '+
+ 'layout variant to the <i>Invoice Reduction</i> one \u2014 it adds <f>Correction ID</f> plus the vendor\u2019s own quantity and amount. '+
+ 'A reduced invoice also creates a <b>second document</b> (the complaint / credit memo); check the follow-on documents after posting.</p>'+
+ '<p><b>Manual fallback:</b> if the system will not reduce automatically, that same layout lets you set '+
+ '<f>Correction ID</f> = <i>Vendor error: reduce invoice</i> and type the vendor\u2019s figures. That is legitimate \u2014 but fix the config first, '+
+ 'because the config is what step 6 is graded on.</p>'},
+{t:'logs',items:[['inv','Invoice document number','']]}
+],
+done:'Invoice posted with reference <v>C##-INV2</v> for <m>110030,00</m>, with the automatic reduction applied.'
+}
+],
+
+check:[
+ 'Step 1: purchase order <v>NB</v> / <v>T-S50A##</v> / item category <b>L</b> / 100 PC <v>T-FL4A##</v> / <m>1500,00</m> / plant 1010',
+ 'Step 2: purchase order <v>NB</v> / <v>T-S52A##</v> / 200 PC <v>T-FL4A1##</v> / <m>500,00</m> / <b>SC Vendor = <v>T-S50A##</v></b> — re-verify this one',
+ 'Step 3: 501 posted if needed (500 pc each) and 541 goods issue posted for the components you provide',
+ 'Step 4: <code>MMBE</code> shows <v>T-FL4A1##</v> in <b>stock provided to vendor</b>, not plant stock',
+ 'Step 5: goods receipt into 101A, and component consumption of <v>T-FL4A1##</v> is +2',
+ 'Step 6a: FI tolerance group <v>C##</v> exists in <code>OBA3</code> for company code 1010',
+ 'Step 6b: vendor-specific tolerance <v>C##</v> has automatic invoice reduction active at <m>50,00</m>',
+ 'Step 6c: <code>BP T-S52A##</code> company code 1010 shows tolerance group <v>C##</v>',
+ 'Step 7: invoice posted, reference <v>C##-INV2</v>, amount <m>110030,00</m>, reduction applied'
+],
+
+outro:[
+ {t:'co',kind:'info',hd:'Next',
+  html:'<a href="task6.html" data-tasklink="task6.html">Task 6 — Contract Processing</a> &nbsp;·&nbsp; '+
+       '<a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a> &nbsp;\u00b7&nbsp; <a href="index.html" data-tasklink="index.html">Back to the hub</a>'}
+]
+};
+CTSbuild(TASK);
+</script>
+</body>
+</html>

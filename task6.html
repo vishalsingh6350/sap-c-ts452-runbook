@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task 6 — Contract Processing · C_TS452</title>
+<meta name="description" content="Interactive step-by-step runbook for the SAP C_TS452 practical assessment - S/4HANA Cloud Private Edition, Sourcing and Procurement.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<script src="assets/app.js"></script>
+<script>
+var TASK = {
+id:'t6', num:6, budget:30,
+title:'Perform Contract Processing',
+subtitle:'A value contract for two material groups, one release order with three different item types, then a goods receipt routed through blocked stock and quality inspection.',
+pills:[['4 steps'],['30 min budget','b'],['Medium risk'],['No customizing','g'],['Ignore warnings','g']],
+org:[
+ ['Plant','<v>1010</v>'],
+ ['Purchasing org','<v>101C</v>'],
+ ['Purchasing group','<v>Z##</v>'],
+ ['Supplier','<v>S520-3##</v>'],
+ ['Contract type','<v>WK</v>']
+],
+
+intro:[
+ {t:'co',kind:'ok',hd:'The exam says: ignore any warning messages',
+  html:'Only red errors block you here. Press Enter through the warnings about missing info records, target values and dates.'},
+
+ {t:'co',kind:'danger',hd:'The real test: which item category',
+  html:'<p>The exam says <i>"Choose the correct item category"</i> twice without naming it. <b>That is the graded decision.</b></p>'+
+  '<table class="dc">'+
+  '<tr><th>Contract item</th><th>Situation described</th><th>Item category</th><th>Why</th></tr>'+
+  '<tr><td><b>10</b> · warning signs</td><td>many different signs, all at the same <m>5,00</m></td><td><v>M</v><br>Material unknown</td><td><v>M</v> = no material master, but <b>one fixed price and one unit</b>. Exactly the case described.</td></tr>'+
+  '<tr><td><b>20</b> · electrical spare parts</td><td>different prices <b>and</b> different order units</td><td><v>W</v><br>Material group</td><td><v>W</v> = no material, <b>no price, no quantity</b> — only a material group and a value. Required when prices and units vary.</td></tr>'+
+  '</table>'}
+],
+
+steps:[
+/* --------- 1 --------- */
+{
+n:1, est:12, railTitle:'Value contract WK',
+title:'Create the value contract',
+goal:'A one-year value contract for 100.000 EUR with a 10 % release-order discount and two material-group items.',
+blocks:[
+{t:'path',tcode:'ME31K',crumbs:['Fiori','Manage Purchase Contracts','Create']},
+{t:'fields',h:'Initial screen',rows:[
+ ['Vendor','<v>S520-3##</v>',''],
+ ['Agreement Type','<v>WK</v>','<b>value</b> contract — Task 7 uses MK',1],
+ ['Agreement date','today',''],
+ ['Purchasing Org','<v>101C</v>',''],
+ ['Purchasing Group','<v>Z##</v>',''],
+ ['Plant','<v>1010</v>','']
+]},
+{t:'fields',h:'Header data',rows:[
+ ['Valid from','<b>1st day of the CURRENT month</b>','e.g. 01.09.2026',1],
+ ['Valid to','<b>valid-from + 1 year − 1 day</b>','e.g. 31.08.2027',1],
+ ['Target Value','<m>100000,00</m>','',1],
+ ['Currency','<v>EUR</v>','']
+]},
+{t:'co',kind:'jud',hd:'Judgment call — the end date',
+ html:'<i>"valid for one year from the first of the actual month."</i> '+
+      '<b>Recommendation: 31.08.2027 for a 01.09.2026 start</b> — exactly one year, no overlap. '+
+      '(01.09.2027 would be a year and a day; 31.08 is the cleaner reading and the usual SAP answer.)'},
+
+{t:'click',h:'The 10 % release-order discount — a HEADER condition',items:[
+ 'Menu <k>Header</k> → <k>Conditions</k> &nbsp;<span style="color:var(--tx3)">(or the Conditions button)</span>',
+ 'Add condition type <v>RA01</v> &nbsp;<span style="color:var(--tx3)">(Discount % on gross)</span> with value <v>10</v> %',
+ 'If <v>RA01</v> is not offered, use <v>RA00</v> — the requirement is a 10 % percentage discount'
+]},
+{t:'co',kind:'danger',hd:'It must be at HEADER level',
+ html:'<i>"For each release order that you create for this contract, you receive a 10 % discount."</i> '+
+      'An item-level discount only covers that one item and will not flow into the release order in step 2.'},
+
+{t:'screen',title:'Item 10  ·  warning signs',blocks:[{t:'fields',h:'',rows:[
+ ['Item category','<v>M</v>','material unknown',1],
+ ['Material','<i>leave blank</i>',''],
+ ['Short text','<v>Warning signs GR##</v>',''],
+ ['Material group','<v>WS##</v>','',1],
+ ['Target quantity','<v>1000</v>','a round number if the field is mandatory'],
+ ['Order unit','<v>PC</v>',''],
+ ['Net price','<m>5,00</m>','',1],
+ ['Plant','<v>1010</v>',''],
+ ['<span style="color:var(--tx3)">item detail → tab</span> Delivery &rarr; Planned Deliv. Time','<v>10</v>','if not on Delivery, check Material Data',1]
+]}]},
+
+{t:'screen',title:'Item 20  ·  electrical spare parts',blocks:[{t:'fields',h:'',rows:[
+ ['Item category','<v>W</v>','material group',1],
+ ['Material','<i>blank</i>',''],
+ ['Short text','<v>Electrical spare parts GR##</v>',''],
+ ['Material group','<v>ET##</v>','',1],
+ ['Quantity / price','<i>leave empty</i>','<v>W</v> does not take them — that is correct behaviour',1],
+ ['Plant','<v>1010</v>',''],
+ ['<span style="color:var(--tx3)">item detail → tab</span> Delivery &rarr; Planned Deliv. Time','<v>5</v>','',1]
+]}]},
+
+{t:'co',kind:'warn',hd:'Item numbers must be 10 and 20',
+ html:'The release order in step 2 refers to them by number. The default increment is 10 — do not renumber.'},
+
+{t:'co',kind:'warn',hd:'Two things that can block the item or the discount',
+ html:'<ul class="bl">'+
+ '<li><b>Item <v>W</v> may demand a target value.</b> In a value contract a <v>W</v> item can require its own item-level target value. '+
+ 'Put in a sensible figure, e.g. <m>50000,00</m>. Leave the <b>header</b> target at <m>100000,00</m> \u2014 that is the graded one.</li>'+
+ '<li><b>Neither RA01 nor RA00 offered?</b> The condition type has to be in the calculation schema for <v>101C</v> and this supplier. '+
+ 'Press <k>F4</k> on the condition type field and take any <b>percentage discount</b> condition available \u2014 the graded fact is '+
+ '10&nbsp;% at header level, not those four characters.</li></ul>'},
+{t:'logs',items:[['ct','Value contract number','needed in step 2']]}
+],
+done:'<code>ME33K</code> shows type <v>WK</v>, target value <m>100000,00</m>, a 10 % header condition, item 10 = <v>M</v> / <v>WS##</v> / <m>5,00</m> / 10 days, item 20 = <v>W</v> / <v>ET##</v> / 5 days.'
+},
+
+/* --------- 2 --------- */
+{
+n:2, est:8, railTitle:'Release order (3 items)',
+title:'Create the contract release order',
+goal:'One purchase order with three items, each referencing a contract item.',
+blocks:[
+{t:'path',tcode:'ME21N',crumbs:['Fiori','Create Purchase Order']},
+{t:'fields',h:'Header',rows:[
+ ['Document type','<v>NB</v>',''],
+ ['Supplier','<v>S520-3##</v>',''],
+ ['Purchasing Org','<v>101C</v>',''],
+ ['Purchasing Group','<v>Z##</v>',''],
+ ['Plant','<v>1010</v>','']
+]},
+{t:'click',h:'How to reference the contract',items:[
+ '<k>Document Overview On</k> → selection variant <k>Outline Agreements</k> &nbsp;<span style="color:var(--tx3)">(or My Contracts)</span>',
+ 'Enter your contract number → <k>Execute</k> → expand',
+ '<b>Drag the contract item</b> into the order, once per line you need',
+ '<span style="color:var(--tx3)">alternative:</span> enter the item manually, then item detail → tab <k>Material Data</k> → fill <f>Outline Agreement</f> and <f>Agreement Item</f> (10 or 20)'
+]},
+{t:'table',h:'The three items',cols:['','Item 10','Item 20','Item 30'],rows:[
+ ['<b>Refers to contract item</b>','<b>10</b>','<b>10</b>','<b>20</b>'],
+ ['Material','<v>B520-5##</v>','<i>none — free text</i>','<i>none — free text</i>'],
+ ['Short text','<i>from the material</i>','<v>Wear safety shoes</v>','<v>Electric fuses 100A</v>'],
+ ['Quantity','<v>200</v> PC','<v>50</v> PC','<v>50</v>'],
+ ['Order unit','PC','PC','<v>PAC</v>'],
+ ['Material group','<span style="color:var(--tx3)">from material</span> <v>WS##</v>','<v>WS##</v>','<v>ET##</v>'],
+ ['Net price','<span style="color:var(--tx3)">from contract</span> <m>5,00</m>','<span style="color:var(--tx3)">from contract</span> <m>5,00</m>','<m>99,90</m>'],
+ ['Acct assignment cat.','<i>blank — stock</i>','<v>K</v>','<v>K</v>'],
+ ['Cost center','—','<v>T-ENG##</v>','<v>T-ENG##</v>'],
+ ['Plant','<v>1010</v>','<v>1010</v>','<v>1010</v>']
+]},
+{t:'co',kind:'danger',hd:'Item 10 must stay a stock item',
+ html:'No account assignment on item 10. Step 3 posts it into GR blocked stock and quality inspection stock — neither is possible for a cost-center item.'},
+{t:'co',kind:'warn',hd:'Three things to verify before saving',
+ html:'<ul class="bl">'+
+ '<li><b>Item 30 order unit is <v>PAC</v></b>, not PC. The exam says "50 PAC".</li>'+
+ '<li><b>The 10 % discount must appear</b> in the item conditions. Open one item’s <k>Conditions</k> tab — if there is no RA01 / RA00 line, the contract reference did not take. Redo that item via Document Overview.</li>'+
+ '<li><b>All three items reference the contract.</b> An item without the link scores nothing.</li></ul>'},
+{t:'logs',items:[['po','Release order (PO) number','']]}
+],
+done:'The order has 3 items, each showing the contract number and the correct contract item.'
+},
+
+/* --------- 3 --------- */
+{
+n:3, est:7, railTitle:'GR blocked → QI / unrestricted',
+title:'Goods receipt via GR blocked stock, then split 100 / 100',
+goal:'200 pieces of B520-5## received unvaluated, then released half to quality inspection and half to unrestricted use.',
+blocks:[
+{t:'co',kind:'info',hd:'Only item 10 is relevant',
+ html:'<v>B520-5##</v> is the only stock material on the order. The two cost-center items cannot go into blocked or quality inspection stock.'},
+
+{t:'path',h:'3a · Receive into GR blocked stock',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Purchase Order</v>',''],
+ ['PO number','your release order',''],
+ ['Movement type','<v>103</v>','GR to blocked stock — <b>unvaluated</b>',1],
+ ['Item','<v>B520-5##</v>, <v>200</v> PC','deselect "Item OK" on the two cost-center items',1],
+ ['Plant','<v>1010</v>','']
+]},
+{t:'co',kind:'danger',hd:'103, not 101',
+ html:'<i>"For a first inspection, you post it into the unvaluated GR blocked stock."</i> That is movement <v>103</v>. '+
+      'Movement 101 goes straight to unrestricted and the rest of the step collapses.'},
+
+{t:'path',h:'3b · Release the blocked stock',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Release GR Blocked Stock</v>','',1],
+ ['Reference','<v>Material Document</v>','your 103 document',1],
+ ['Movement type','<v>105</v>','set automatically','']
+]},
+{t:'co',kind:'ok',hd:'Do it as TWO separate postings — far easier than splitting one line',
+ html:'<table class="dc">'+
+ '<tr><th></th><th>Posting A</th><th>Posting B</th></tr>'+
+ '<tr><td>Quantity</td><td><v>100</v> PC</td><td><v>100</v> PC</td></tr>'+
+ '<tr><td>Storage location</td><td><v>101C</v></td><td><v>101C</v></td></tr>'+
+ '<tr><td><b>Stock type</b> <span style="color:var(--tx3)">(Where tab)</span></td><td><b>Quality Inspection</b></td><td><b>Unrestricted Use</b></td></tr>'+
+ '</table>'},
+{t:'co',kind:'warn',hd:'Stock type lives on the item Where tab',
+ html:'It is a dropdown: <i>Unrestricted use / Quality inspection / Blocked</i>. <b>This is the graded field.</b> '+
+      'The exam names <v>101C</v> only for the quality-inspection portion; using 101C for both keeps the stock together and makes step 4 simple.'},
+{t:'click',items:['Verify with <code>MMBE</code>: <v>B520-5##</v> / plant 1010 → 100 in quality inspection, 100 unrestricted']},
+{t:'logs',items:[['d103','103 document',''],['d105','105 documents (both)','']]}
+],
+done:'<code>MMBE</code> shows the 100 / 100 split for <v>B520-5##</v>.'
+},
+
+/* --------- 4 --------- */
+{
+n:4, est:3, railTitle:'321 transfer + header text',
+title:'Transfer quality inspection → unrestricted use',
+blocks:[
+{t:'path',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Transfer Posting</v>',''],
+ ['Reference','<v>Other</v>',''],
+ ['Movement type','<v>321</v>','quality inspection → unrestricted',1],
+ ['Material','<v>B520-5##</v>',''],
+ ['Quantity','<v>100</v> PC',''],
+ ['Plant / Storage location','<v>1010</v> / <v>101C</v>','']
+]},
+{t:'click',h:'The header text',items:[
+ 'Header area → tab <k>General</k>',
+ 'Field <f>Document Header Text</f> → <v>C##-TR</v>',
+ '<k>Check</k> → <k>Post</k>'
+]},
+{t:'co',kind:'danger',hd:'Header General tab — again',
+ html:'Not <f>Delivery Note</f>, not <f>Bill of Lading</f>, not the item text. Same trap as Task 4 step 5.'},
+{t:'co',kind:'info',hd:'Stock types are implied by 321',
+ html:'You normally do not pick them manually — the movement type carries the from/to.'},
+{t:'click',items:['Verify with <code>MMBE</code>: <v>B520-5##</v> in 1010 / 101C = <b>200 unrestricted, 0 in quality inspection</b>']},
+{t:'logs',items:[['d321','321 transfer document','']]}
+],
+done:'Quality inspection stock is zero and header text <v>C##-TR</v> is on the document.'
+}
+],
+
+check:[
+ 'Contract type <v>WK</v>, supplier <v>S520-3##</v>, purchasing org 101C, plant 1010, group <v>Z##</v>',
+ 'Valid from the 1st of the current month, valid to +1 year − 1 day',
+ 'Target value <m>100000,00</m> and a 10 % <b>header</b> discount condition',
+ 'Item 10: category <v>M</v>, material group <v>WS##</v>, price <m>5,00</m>, planned delivery 10',
+ 'Item 20: category <v>W</v>, material group <v>ET##</v>, planned delivery 5',
+ 'Release order type <v>NB</v> with 3 items, <b>all</b> referencing the contract',
+ 'Item 1 = <v>B520-5##</v> 200 PC stock · Item 2 = 50 PC free text, <v>K</v>/<v>T-ENG##</v> · Item 3 = 50 <v>PAC</v> at <m>99,90</m>, <v>K</v>/<v>T-ENG##</v>',
+ '10 % discount visible in the item conditions of the release order',
+ '<v>103</v> posted for 200 PC, then <v>105</v> split: 100 to quality inspection in <v>101C</v> + 100 to unrestricted',
+ '<v>321</v> for 100 PC with document header text <v>C##-TR</v>',
+ '<code>MMBE</code> final state: 200 unrestricted, 0 in quality inspection'
+],
+
+outro:[
+ {t:'table',h:'Quick troubleshooting',cols:['Problem','Fix'],rows:[
+  ['Item category <v>M</v> rejects a blank material','Correct — <v>M</v> needs short text, material group, price and unit. Fill those.'],
+  ['Item category <v>W</v> rejects a price','Correct — <v>W</v> takes no price and no quantity. Leave them blank.'],
+  ['Contract items numbered 1 and 2','Change the item number increment or renumber. Step 2 refers to "item 10" and "item 20".'],
+  ['No discount on the release order','The 10 % went in at item level in the contract, or the order item does not reference the contract.'],
+  ['<code>MIGO</code> offers no 105','Use Action = <k>Release GR Blocked Stock</k> with reference <k>Material Document</k> (the 103), not <k>Goods Receipt</k>.'],
+  ['Cannot set the stock type','Wrong tab — it is on the item <k>Where</k> tab.'],
+  ['Warnings everywhere','The exam says ignore them. Press Enter and continue.']
+ ]},
+ {t:'co',kind:'info',hd:'Next',
+  html:'<a href="task7.html" data-tasklink="task7.html">Task 7 — Material Requirements Planning</a> &nbsp;·&nbsp; '+
+       '<a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a> &nbsp;\u00b7&nbsp; <a href="index.html" data-tasklink="index.html">Back to the hub</a>'}
+]
+};
+CTSbuild(TASK);
+</script>
+</body>
+</html>

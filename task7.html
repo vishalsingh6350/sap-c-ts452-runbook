@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Task 7 — Material Requirements Planning · C_TS452</title>
+<meta name="description" content="Interactive step-by-step runbook for the SAP C_TS452 practical assessment - S/4HANA Cloud Private Edition, Sourcing and Procurement.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<script src="assets/app.js"></script>
+<script>
+var TASK = {
+id:'t7', num:7, budget:35,
+title:'Material Requirements Planning',
+subtitle:'A new raw material planned by reorder point, sourced automatically by MRP — first from a purchasing info record, then from a quantity contract.',
+pills:[['10 steps'],['35 min budget','b'],['Medium risk'],['No customizing','g'],['Sequence is everything','r']],
+org:[
+ ['Plant','<v>1010</v>'],
+ ['Storage location','<v>101A</v>'],
+ ['Purchasing org','<v>101C</v>'],
+ ['Purchasing group','<v>Z##</v>'],
+ ['Material','<v>T-RC5##</v>']
+],
+
+intro:[
+ {t:'co',kind:'info',hd:'The shape of this task — know where you are going',
+  html:'<table class="dc">'+
+  '<tr><td><b>Steps 1–2</b></td><td>master data, so MRP can plan <b>and</b> find a source</td></tr>'+
+  '<tr><td><b>Steps 3–4</b></td><td>create a stock situation and a requirement</td></tr>'+
+  '<tr><td><b>Step 5</b></td><td><b>MRP RUN #1</b> → requisition assigned to <v>S520-1##</v></td></tr>'+
+  '<tr><td><b>Step 6</b></td><td>change that requisition and <b>fix</b> it, so run #2 cannot destroy it</td></tr>'+
+  '<tr><td><b>Steps 7–9</b></td><td>quantity contract + source list, so MRP prefers the contract</td></tr>'+
+  '<tr><td><b>Step 10</b></td><td><b>MRP RUN #2</b> → a second requisition, assigned to the contract</td></tr>'+
+  '</table>'+
+  '<p style="margin-top:8px"><b>Do not reorder.</b> Running MRP before the reservation exists produces nothing to plan.</p>'},
+ {t:'co',kind:'warn',hd:'Storage bin differs from Task 3',
+  html:'Task 3 used <v>GR##</v>. This task uses <v>C-GR##</v>. Easy to confuse under pressure.'}
+],
+
+steps:[
+/* --------- 1 --------- */
+{
+n:1, est:8, railTitle:'Material T-RC5##',
+title:'Create material <v>T-RC5##</v>',
+goal:'A raw material with full MRP settings for plant 1010, plus purchasing, storage and accounting views.',
+blocks:[
+{t:'path',tcode:'MM01',crumbs:['Fiori','Manage Product Master Data','Create']},
+{t:'fields',h:'Initial screen',rows:[
+ ['Material','<v>T-RC5##</v>','',1],
+ ['Industry sector','<v>M</v>','or the default offered'],
+ ['Material type','<v>ROH</v>','']
+]},
+{t:'list',h:'Views to select',ol:false,items:[
+ '<b>Basic Data 1</b>','<b>Purchasing</b>','<b>MRP 1</b>','<b>MRP 2</b>','<b>MRP 3</b>','<b>MRP 4</b> <span style="color:var(--tx3)">(harmless if empty)</span>',
+ '<b>General Plant Data / Storage 1</b>','<b>Accounting 1</b>',
+ '<span style="color:var(--tx3)">The exam adds: <i>"Maintain the views for purchasing, storage, and accounting as well."</i></span>'
+]},
+{t:'fields',h:'Organizational levels',rows:[
+ ['Plant','<v>1010</v>','',1],
+ ['Storage location','<v>101A</v>','',1]
+]},
+{t:'screen',title:'Basic Data 1',blocks:[{t:'fields',h:'',rows:[
+ ['Description','<v>Certification GR##</v>','',1],
+ ['Base Unit of Measure','<v>PC</v>',''],
+ ['Material group','<v>00103</v>','any valid group']
+]}]},
+{t:'screen',title:'Purchasing',blocks:[{t:'fields',h:'',rows:[
+ ['Purchasing Group','<v>Z##</v>','',1],
+ ['Order unit','<v>PC</v>','']
+]}]},
+{t:'screen',title:'MRP 1',blocks:[{t:'fields',h:'',rows:[
+ ['MRP Type <span style="color:var(--tx3)">(the exam calls it "MRP Procedure")</span>','<v>V1</v>','',1],
+ ['MRP Controller','<v>0##</v>','',1],
+ ['Reorder Point','<v>80</v>','',1],
+ ['Lot Size','<v>FX</v>','fixed order quantity',1],
+ ['Fixed Lot Size','<v>200</v>','',1]
+]}]},
+{t:'screen',title:'MRP 2',blocks:[{t:'fields',h:'',rows:[
+ ['Procurement type','<v>F</v>','external procurement'],
+ ['Planned Delivery Time','<v>10</v>','',1],
+ ['Safety Stock','<v>20</v>','',1]
+]}]},
+{t:'screen',title:'MRP 3',blocks:[{t:'fields',h:'',rows:[
+ ['Availability Check','<v>Y2</v>','',1]
+]}]},
+{t:'screen',title:'General Plant Data / Storage 1',blocks:[{t:'fields',h:'',rows:[
+ ['Storage Bin','<v>C-GR##</v>','<b>not</b> GR## — that was Task 3',1]
+]}]},
+{t:'screen',title:'Accounting 1',blocks:[{t:'fields',h:'',rows:[
+ ['Valuation Class','<v>3000</v>','',1],
+ ['Price Control','<v>V</v>','',1],
+ ['Moving Average Price','<m>10,00</m>','recommended — see below'],
+ ['Price Unit','<v>1</v>','']
+]}]},
+{t:'co',kind:'warn',hd:'Three things that quietly matter',
+ html:'<ul class="bl">'+
+ '<li><b><v>V1</v></b> is <i>manual reorder point planning including external requirements</i> — that is what makes the reservations in steps 4 and 8 drive the MRP result. <b>Do not use VB.</b></li>'+
+ '<li><b>Set the price to <m>10,00</m></b>. Not demanded, but the 501 receipt in step 3 needs a price, and step 6 wants a valuation price of 10.</li>'+
+ '<li><b>MRP views must exist for plant 1010.</b> A material without plant-level MRP views is simply skipped by the MRP run — with no error at all.</li></ul>'},
+{t:'logs',items:[['mat','Material created','T-RC5##']]}
+],
+done:'<code>MM03</code> shows MRP 1 / 2 / 3 for plant 1010 with all eight MRP values above.'
+},
+
+/* --------- 2 --------- */
+{
+n:2, est:6, railTitle:'Info record + source list',
+title:'Purchasing info record, and make it MRP-relevant',
+goal:'A price for S520-1##, and a source list entry so MRP can actually pick it.',
+blocks:[
+{t:'path',h:'2a · Info record',tcode:'ME11'},
+{t:'fields',rows:[
+ ['Vendor','<v>S520-1##</v>',''],
+ ['Material','<v>T-RC5##</v>',''],
+ ['Purchasing Org','<v>101C</v>','',1],
+ ['Plant','<v>1010</v>',''],
+ ['Info category','<b>◉ Standard</b>',''],
+ ['<span style="color:var(--tx3)">Purch. Org Data 1 →</span> Purchasing Group','<v>Z##</v>',''],
+ ['Planned Delivery Time','<v>10</v>',''],
+ ['Standard Quantity','<v>100</v>','"the normal order quantity is 100 pc"',1],
+ ['Net Price','<m>10,00</m> <v>EUR</v> per <v>1</v> <v>PC</v>','',1]
+]},
+
+{t:'path',h:'2b · Make it relevant for MRP — the source list',tcode:'ME01',
+ crumbs:['Fiori','Manage Source Lists']},
+{t:'fields',rows:[
+ ['Material','<v>T-RC5##</v>',''],
+ ['Plant','<v>1010</v>','']
+]},
+{t:'table',h:'The line to add',cols:['Valid from','Valid to','Vendor','Purch. Org','MRP','Fix'],rows:[
+ ['today','<v>31.12.9999</v>','<v>S520-1##</v>','<v>101C</v>','<b><v>1</v></b>','<i>blank for now</i>']
+]},
+{t:'co',kind:'jud',hd:'Judgment call — what "mark the info record as relevant for MRP" actually means',
+ html:'<p>The purchasing info record itself has <b>no MRP flag</b> in S/4HANA. The mechanism that makes MRP pick a source is the '+
+ '<b>source list</b>, whose MRP indicator <v>1</v> means <i>"record relevant to MRP"</i>.</p>'+
+ '<p><b>Recommendation: create the info record AND the source list line with MRP = 1.</b> '+
+ 'That covers both readings, and it is the only way step 5 can produce an <i>assigned</i> requisition.</p>'+
+ '<p><span style="color:var(--tx3)">Optional extra: tick <f>Source list</f> on MRP 2 of the material to make the source list binding. Not required — skip if time is tight.</span></p>'},
+{t:'logs',items:[['pir','Info record number','']]}
+],
+done:'<code>ME03</code> shows one source list line for <v>S520-1##</v> with MRP indicator <v>1</v>.'
+},
+
+/* --------- 3 --------- */
+{
+n:3, est:2, railTitle:'GR 50 pc (501)',
+title:'Post a goods receipt of 50 pieces',
+blocks:[
+{t:'path',tcode:'MIGO'},
+{t:'fields',rows:[
+ ['Action','<v>Goods Receipt</v>',''],
+ ['Reference','<v>Other</v>','no purchase order is given',1],
+ ['Movement type','<v>501</v>','',1],
+ ['Material','<v>T-RC5##</v>',''],
+ ['Quantity','<v>50</v> PC',''],
+ ['Plant / Storage location','<v>1010</v> / <v>101A</v>','']
+]},
+{t:'co',kind:'warn',hd:'If it errors on valuation',
+ html:'The material has no price. <code>MM02</code> → Accounting 1 → set <m>10,00</m>, then retry.'},
+{t:'logs',items:[['d501','501 material document','']]}
+],
+done:'<code>MMBE</code> shows 50 PC unrestricted in 1010 / 101A.'
+},
+
+/* --------- 4 --------- */
+{
+n:4, est:2, railTitle:'Reservation 10 pc',
+title:'Reservation for 10 pieces, today + 2 days',
+blocks:[
+{t:'path',tcode:'MB21',crumbs:['Fiori','Manage Reservations','Create']},
+{t:'fields',rows:[
+ ['Base date','<b>today + 2 days</b>','a requirement date MRP will see',1],
+ ['Movement type','<v>201</v>','goods issue to cost center',1],
+ ['Plant','<v>1010</v>',''],
+ ['Cost Center','<v>T-ENG##</v>','',1],
+ ['<span style="color:var(--tx3)">item →</span> Material','<v>T-RC5##</v>',''],
+ ['Quantity','<v>10</v> PC',''],
+ ['Storage location','<v>101A</v>','']
+]},
+{t:'logs',items:[['res1','Reservation 1 number','']]}
+],
+done:'The reservation appears in <code>MD04</code> for <v>T-RC5##</v>.'
+},
+
+/* --------- 5 --------- */
+{
+n:5, est:4, railTitle:'MRP RUN #1',
+title:'MRP run #1',
+goal:'One purchase requisition for 200 pieces, assigned to S520-1##.',
+blocks:[
+{t:'path',tcode:['MD02','MD03'],crumbs:['Fiori','Schedule MRP Run']},
+{t:'fields',h:'MD02 parameters — every one of these matters',rows:[
+ ['Material','<v>T-RC5##</v>',''],
+ ['Plant','<v>1010</v>',''],
+ ['Processing key','<v>NEUPL</v>','regenerative planning — <b>not</b> NETCH',1],
+ ['Create purchase req.','<v>1</v>','<b>1 = requisitions immediately.</b> 2 gives planned orders',1],
+ ['Delivery schedules','<v>3</v>',''],
+ ['Create MRP list','<v>1</v>',''],
+ ['Planning mode','<v>1</v>',''],
+ ['Scheduling','<v>1</v>','']
+]},
+{t:'click',items:['Press <k>Enter</k> twice past the warning, then <k>Execute</k>','Then open <code>MD04</code> for <v>T-RC5##</v> / <v>1010</v>']},
+
+{t:'co',kind:'info',hd:'If MD02 is not available, use MRP Live',
+ html:'<code>MD01N</code>, or the Fiori <i>Schedule MRP Run</i> app. MRP Live has no <f>Create purchase req.</f> control \u2014 for an '+
+ 'externally procured material (procurement type <v>F</v>, which you set on MRP 2) it creates <b>purchase requisitions</b> directly, '+
+ 'which is exactly what you want. Run it for <v>T-RC5##</v> / <v>1010</v> and check <code>MD04</code> as described. '+
+ '<b>Never use planning mode 3 (delete and recreate)</b> on the second run \u2014 it can wipe planning data.'},
+{t:'co',kind:'ok',hd:'What you should see',
+ html:'Stock 50, safety stock 20, reorder point 80, reservation 10 → shortage → '+
+      '<b>one purchase requisition for 200 PC</b> (the fixed lot size), <b>assigned to supplier <v>S520-1##</v></b>.'},
+{t:'co',kind:'danger',hd:'The requisition MUST carry the supplier',
+ html:'If it has no supplier, your source list from step 2b is missing or its MRP indicator is not <v>1</v>. '+
+      'Fix the source list and re-run <code>MD02</code>. A requisition with no source makes step 10 impossible to interpret.'},
+{t:'click',items:['Double-click the requisition line in <code>MD04</code> to read its number — write it down']},
+{t:'logs',items:[['pr1','Requisition #1 number','']]}
+],
+done:'<code>MD04</code> shows one purchase requisition, 200 PC, supplier <v>S520-1##</v>.'
+},
+
+/* --------- 6 --------- */
+{
+n:6, est:3, railTitle:'Change + FIX requisition',
+title:'Change the requisition and <u>fix</u> it',
+blocks:[
+{t:'path',tcode:'ME52N',crumbs:['Fiori','Manage Purchase Requisitions']},
+{t:'fields',h:'Three changes',rows:[
+ ['<span style="color:var(--tx3)">item detail → tab</span> Valuation &rarr; Valuation Price','<m>10,00</m> <v>EUR</v>','',1],
+ ['Delivery date','<b>proposed date + 1 day</b>','not today + 1',1],
+ ['<span style="color:var(--tx3)">item detail → tab</span> Quantities/Dates &rarr; Fixed','<b>☑ TICK IT</b>','',1]
+]},
+{t:'co',kind:'danger',hd:'Silent killer — without the Fixed tick, step 10 falls apart',
+ html:'<p>MRP run #2 in step 10 recalculates everything. An unfixed requisition is <b>overwritten or deleted</b> — your date change and price vanish, and <code>MD04</code> ends up with one requisition instead of two.</p>'+
+ '<p>The exam says <i>"The purchase requisition should be fixed after the change"</i> — that is a checkbox, not a figure of speech.</p>'},
+{t:'co',kind:'warn',hd:'If the Fixed checkbox is not on Quantities/Dates',
+ html:'Look for a <f>Fixed</f> column in the item overview, or a <f>Fixed</f> toggle in the Fiori <i>Manage Purchase Requisitions</i> app. The position moves between releases.'}
+],
+done:'Re-opening the requisition shows price <m>10,00</m>, the shifted date, <b>and</b> the Fixed flag set.'
+},
+
+/* --------- 7 --------- */
+{
+n:7, est:5, railTitle:'Quantity contract MK',
+title:'Quantity contract with <v>T-S52A##</v>',
+blocks:[
+{t:'path',tcode:'ME31K'},
+{t:'fields',h:'Initial screen + header',rows:[
+ ['Vendor','<v>T-S52A##</v>','the Task 5 component supplier — <b>not</b> S520-1##',1],
+ ['Agreement Type','<v>MK</v>','<b>quantity</b> contract — Task 6 used WK',1],
+ ['Agreement date','today',''],
+ ['Purchasing Org','<v>101C</v>',''],
+ ['Purchasing Group','<v>Z##</v>',''],
+ ['Plant','<v>1010</v>',''],
+ ['Valid from','<b>1st of the current month</b>','',1],
+ ['Valid to','<b>valid-from + 1 year − 1 day</b>','',1]
+]},
+{t:'fields',h:'Item 10',rows:[
+ ['Material','<v>T-RC5##</v>',''],
+ ['Target quantity','<v>5000</v> PC','',1],
+ ['Net price','<m>9,50</m> <v>EUR</v> per <v>1</v> <v>PC</v>','',1],
+ ['Plant','<v>1010</v>','']
+]},
+{t:'co',kind:'warn',hd:'Write down the item number too',
+ html:'Step 9 needs both the <b>contract number</b> and the <b>agreement item</b> (10). A contract number alone is not a usable source.'},
+{t:'logs',items:[['ct','Quantity contract number',''],['cti','Contract item','10']]}
+],
+done:'<code>ME33K</code> shows type <v>MK</v>, 5000 PC at <m>9,50</m>, valid one year from the 1st of this month.'
+},
+
+/* --------- 8 --------- */
+{
+n:8, est:2, railTitle:'Reservation 250 pc',
+title:'Second reservation — 250 pieces, first week of next month',
+blocks:[
+{t:'path',tcode:'MB21'},
+{t:'fields',rows:[
+ ['Base date','<b>any day in the FIRST WEEK of NEXT month</b>','e.g. 03.10.2026',1],
+ ['Movement type','<v>201</v>',''],
+ ['Plant','<v>1010</v>',''],
+ ['Cost Center','<v>T-ENG##</v>',''],
+ ['Material','<v>T-RC5##</v>',''],
+ ['Quantity','<v>250</v> PC','',1],
+ ['Storage location','<v>101A</v>','']
+]},
+{t:'co',kind:'danger',hd:'This is what triggers the second requisition',
+ html:'Without it, step 10 produces nothing new and looks like the MRP run failed. '+
+      'It <b>must</b> be next month — a date this month merges into the existing coverage.'},
+{t:'logs',items:[['res2','Reservation 2 number','']]}
+],
+done:'<code>MD04</code> shows a second reservation for 250 PC next month.'
+},
+
+/* --------- 9 --------- */
+{
+n:9, est:4, railTitle:'Source list → contract',
+title:'Make the contract the source for MRP',
+blocks:[
+{t:'path',tcode:'ME01'},
+{t:'table',h:'The source list should end up like this',cols:['Valid from','Valid to','Vendor','Purch. Org','Agreement','Item','MRP','Fix'],rows:[
+ ['today','<v>31.12.9999</v>','<v>T-S52A##</v>','<v>101C</v>','<b>your MK contract</b>','<v>10</v>','<b><v>1</v></b>','<b>☑</b>'],
+ ['<span style="color:var(--tx3)">existing line</span>','','<v>S520-1##</v>','<v>101C</v>','—','—','<b>blank</b>','☐']
+]},
+{t:'co',kind:'jud',hd:'Judgment call — how to steer MRP to the contract',
+ html:'<p>With two MRP-relevant source list lines, MRP may pick either one.</p>'+
+ '<p><b>Recommendation: give the contract line MRP = <v>1</v> and tick <f>Fix</f> (fixed source of supply), and blank the MRP indicator on the info-record line.</b></p>'+
+ '<p><b>Reasoning:</b> <f>Fix</f> forces MRP onto that source, which is exactly what step 10 demands — <i>"assigned to the supplier T-S52A## and the contract you created."</i> '+
+ 'The first requisition is already <b>fixed</b> from step 6, so removing MRP relevance from the old line cannot damage it.</p>'},
+{t:'co',kind:'warn',hd:'Both the agreement number AND the item',
+ html:'The <f>Agreement</f> column takes the contract number; the <f>Item</f> column takes <v>10</v>. Leave the item blank and MRP cannot use the source.'},
+
+{t:'co',kind:'warn',hd:'Validity must cover the REQUIREMENT date, not today',
+ html:'The requirement that drives run #2 sits in the <b>first week of next month</b>. A source list line valid only to the end of '+
+ 'this month is invisible to it, and so is a contract that has not started yet. Use <v>31.12.9999</v> as the valid-to on both source list lines.'}
+],
+done:'<code>ME03</code> shows two lines; the contract line carries the agreement, item 10, MRP <v>1</v>, and Fix ticked.'
+},
+
+/* --------- 10 --------- */
+{
+n:10, est:4, railTitle:'MRP RUN #2',
+title:'MRP run #2 and check the result',
+blocks:[
+{t:'path',tcode:'MD02'},
+{t:'fields',h:'Same parameters as step 5',rows:[
+ ['Material / Plant','<v>T-RC5##</v> / <v>1010</v>',''],
+ ['Processing key','<v>NEUPL</v>',''],
+ ['Create purchase req.','<v>1</v>',''],
+ ['Delivery schedules','<v>3</v>',''],
+ ['Create MRP list','<v>1</v>',''],
+ ['Planning mode','<v>1</v>','']
+]},
+{t:'click',items:['<k>Execute</k>, then open <code>MD04</code>']},
+{t:'list',h:'What you should see',ol:false,items:[
+ 'The <b>first</b> requisition is still there, still fixed, supplier <v>S520-1##</v>',
+ 'A <b>second, new</b> requisition exists',
+ 'The second one shows supplier <v>T-S52A##</v> <b>and</b> the contract number + item 10'
+]},
+{t:'click',items:['Double-click the new requisition → tab <k>Source of Supply</k> → it should name the <b>outline agreement</b>, not just a vendor']},
+{t:'table',h:'If it is not right',cols:['Symptom','Cause → fix'],rows:[
+ ['The first requisition disappeared','It was not fixed. Redo step 6, then re-run.'],
+ ['Second requisition has a supplier but no contract','The source list line is missing the agreement <b>item</b> number, or <f>Fix</f> is not ticked.'],
+ ['Nothing new appeared','The step 8 reservation is missing, or dated in the wrong month.'],
+ ['Planned orders instead of requisitions','<i>Create purchase req.</i> was <v>2</v>. Set it to <v>1</v> and re-run.']
+]},
+{t:'logs',items:[['pr2','Requisition #2 number','']]}
+],
+done:'<code>MD04</code> shows two requisitions — one fixed on <v>S520-1##</v>, one on the contract.'
+}
+],
+
+check:[
+ '<v>T-RC5##</v>: plant 1010, SLoc 101A, bin <v>C-GR##</v>, group <v>Z##</v>, valuation class 3000, price control V',
+ 'MRP: type <v>V1</v>, controller <v>0##</v>, reorder point 80, lot size <v>FX</v>, fixed lot 200, planned delivery 10, safety stock 20, availability check <v>Y2</v>',
+ 'Info record <v>S520-1##</v> / 101C / price <m>10,00</m> / standard quantity 100',
+ 'Source list line for <v>S520-1##</v> with MRP indicator <v>1</v>',
+ '501 goods receipt, 50 PC, 1010 / 101A',
+ 'Reservation 10 PC, cost center <v>T-ENG##</v>, dated today + 2',
+ 'MRP run 1 produced a requisition for 200 PC assigned to <v>S520-1##</v>',
+ 'Requisition changed: valuation price <m>10,00</m>, date +1 day, <b>Fixed ticked</b>',
+ 'Quantity contract <v>MK</v>, <v>T-S52A##</v>, 5000 PC at <m>9,50</m>, one year from the 1st of the month',
+ 'Reservation 250 PC, <v>T-ENG##</v>, first week of next month',
+ 'Source list: contract line with agreement + item 10, MRP <v>1</v>, Fix ticked',
+ 'MRP run 2 produced a second requisition on <v>T-S52A##</v> + the contract, first requisition intact'
+],
+
+outro:[
+ {t:'table',h:'Quick troubleshooting',cols:['Problem','Fix'],rows:[
+  ['MRP run produces nothing','No MRP views for plant 1010, or the processing key is NETCH with no changes. Use <v>NEUPL</v>.'],
+  ['Requisition has no supplier','Source list missing, MRP indicator not <v>1</v>, or the line is not valid on the requisition date.'],
+  ['Second requisition uses the info record, not the contract','Blank the MRP indicator on the info-record line and tick <f>Fix</f> on the contract line.'],
+  ['Cannot enter the contract in <code>ME01</code>','You must give both the agreement number and the agreement <b>item</b> (10).'],
+  ['501 fails on valuation','<code>MM02</code> → Accounting 1 → moving average price <m>10,00</m>.']
+ ]},
+ {t:'co',kind:'info',hd:'Next',
+  html:'<a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a> &nbsp;\u00b7&nbsp; <a href="index.html" data-tasklink="index.html">Back to the hub</a> — then run the final verification sweep before you submit.'}
+]
+};
+CTSbuild(TASK);
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "C_TS452 Exam Runbook",
+  "short_name": "C_TS452",
+  "description": "Step-by-step runbook for the SAP S/4HANA Sourcing and Procurement practical assessment.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f7f9",
+  "theme_color": "#1a56db",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

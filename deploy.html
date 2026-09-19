@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Deploy to GitHub Pages · C_TS452</title>
+<meta name="description" content="Step-by-step guide to publishing the C_TS452 runbook on GitHub Pages.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .cmd{position:relative;background:var(--bg3);border:1px solid var(--line);border-radius:9px;
+       margin:10px 0;overflow:hidden}
+  .cmd-h{display:flex;align-items:center;gap:8px;padding:6px 10px 6px 12px;
+         border-bottom:1px solid var(--line);background:var(--bg2)}
+  .cmd-h .w{font:700 10.5px var(--sans);text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);flex:1}
+  .cmd pre{margin:0;padding:11px 13px;overflow-x:auto;font:600 13px var(--mono);line-height:1.65;
+           color:var(--tx);white-space:pre}
+  .cmd pre .c{color:var(--tx3);font-weight:400}
+  .cpy{background:var(--bg3);border:1px solid var(--line2);border-radius:6px;padding:3px 10px;
+       font:600 11.5px var(--sans);cursor:pointer;color:var(--tx2);flex:none}
+  .cpy:hover{background:var(--acc);border-color:var(--acc);color:#fff}
+  .cpy.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+  .ui{display:flex;gap:9px;align-items:flex-start;background:var(--acc-bg);border-radius:8px;
+      padding:10px 13px;margin:8px 0;font-size:14.5px}
+  .ui .ic{flex:none;width:21px;height:21px;border-radius:5px;background:var(--acc);color:#fff;
+          font:700 11px var(--mono);display:grid;place-items:center;margin-top:1px}
+  .opt{border:2px solid var(--line);border-radius:11px;padding:15px 17px;margin:12px 0;background:var(--bg2)}
+  .opt.pick{border-color:var(--ok)}
+  .opt h4{font-size:16px;margin-bottom:5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .opt .badge{font:700 10px var(--sans);text-transform:uppercase;letter-spacing:.06em;
+              background:var(--ok);color:#fff;border-radius:99px;padding:2px 9px}
+  .opt .badge.n{background:var(--bg3);color:var(--tx3)}
+  .panel{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);
+         padding:16px 18px;box-shadow:var(--sh);min-width:0}
+  .url{font:700 15px var(--mono);background:var(--ok-bg);color:var(--ok);
+       border-radius:8px;padding:9px 13px;display:inline-block;margin:6px 0;word-break:break-all}
+  .stepnum{counter-reset:dstep}
+  .dstep{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);
+         padding:17px 19px;margin-bottom:14px;box-shadow:var(--sh);min-width:0}
+  .dstep > h3{font-size:18px;margin-bottom:9px;display:flex;gap:11px;align-items:center}
+  .dstep > h3::before{counter-increment:dstep;content:counter(dstep);flex:none;
+      width:28px;height:28px;border-radius:8px;background:var(--acc);color:#fff;
+      font:700 14px var(--mono);display:grid;place-items:center}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand"><span class="tag">C_TS452</span>
+      <a href="index.html" data-tasklink="index.html" style="text-decoration:none;color:inherit">Deploy</a></div>
+    <div class="sp"></div>
+    <button id="thm" class="btn sm" title="Light / dark">&#9681;</button>
+    <button id="prn" class="btn sm">Print</button>
+  </div>
+</div>
+
+<div class="single">
+
+  <div class="head">
+    <div class="eyebrow" style="font:700 12px var(--mono);letter-spacing:.08em;color:var(--acc);text-transform:uppercase">Setup &middot; do this once</div>
+    <h1>Publish the runbook on GitHub Pages</h1>
+    <p>Plain static HTML, no build step, no dependencies. About ten minutes from nothing to a live URL
+       you can open on your phone.</p>
+    <div class="meta">
+      <span class="pill b">7 steps</span>
+      <span class="pill">~10 min</span>
+      <span class="pill r">Read step 1 before you commit anything</span>
+    </div>
+  </div>
+
+  <!-- ============ COPYRIGHT ============ -->
+  <div class="co danger">
+    <div class="t"><span>&#9760;</span>Read this first &mdash; do not commit the SAP PDF</div>
+    <p><code>C_TS452_EN_2601_Task_Instructions.pdf</code> is SAP copyrighted courseware. On a free GitHub
+    account <b>Pages only works from a public repository</b>, so anything you commit becomes publicly
+    downloadable and indexable.</p>
+    <p><b>Keep the PDF out of the repository.</b> Every path in this guide does that &mdash; either by
+    publishing only the <code>Guides</code> folder, or with a <code>.gitignore</code>. Your own notes
+    are safe: group number, ticks and document numbers live in your browser, never in the site files.</p>
+  </div>
+
+  <div class="stepnum">
+
+  <!-- ============ 1. LAYOUT ============ -->
+  <div class="dstep">
+    <h3>Choose the repository layout</h3>
+    <p style="color:var(--tx2);margin-top:0">GitHub Pages serves from the <b>repository root</b> or from a
+    folder named <b><code>/docs</code></b>. Nothing else. That is the only real decision here.</p>
+
+    <div class="opt pick">
+      <h4>Option A &mdash; a repo that contains only the site <span class="badge">Recommended</span></h4>
+      <p style="margin:4px 0;color:var(--tx2)">Copy the contents of <code>Guides</code> into a new empty folder and
+      publish that as the repo root. The PDF is never anywhere near the repository, so it cannot leak by
+      accident, and Pages needs no special setting.</p>
+      <p style="margin:4px 0;font-size:13.5px;color:var(--tx3)">Cost: the site lives in a different folder from
+      your working copy, so you edit in one place and copy across. For a runbook you rarely change, that is nothing.</p>
+    </div>
+
+    <div class="opt">
+      <h4>Option B &mdash; one repo, site in <code>/docs</code> <span class="badge n">If you want everything together</span></h4>
+      <p style="margin:4px 0;color:var(--tx2)">Rename <code>Guides</code> to <code>docs</code>, add a
+      <code>.gitignore</code> that excludes the PDF, and point Pages at <code>/docs</code>.</p>
+      <p style="margin:4px 0;font-size:13.5px;color:var(--dgr)">Risk: one careless <code>git add -A</code> with a broken
+      <code>.gitignore</code> publishes the PDF. Check <code>git status</code> before your first commit.</p>
+    </div>
+
+    <div class="co info" style="margin-bottom:0">
+      <div class="t"><span>&#8505;</span>Repository name decides your URL</div>
+      A repo called <code>sap-c-ts452-runbook</code> gives you
+      <code>https://&lt;you&gt;.github.io/sap-c-ts452-runbook/</code>.
+      A repo named exactly <code>&lt;your-username&gt;.github.io</code> gives you the bare
+      <code>https://&lt;you&gt;.github.io/</code> instead. Either works &mdash; all links in the runbook are relative.
+    </div>
+  </div>
+
+  <!-- ============ 2. PREP ============ -->
+  <div class="dstep">
+    <h3>Prepare the folder</h3>
+
+    <p style="color:var(--tx2);margin-top:0"><b>Check Git is installed.</b> Use <b>Git Bash</b> on Windows &mdash;
+    these commands assume it.</p>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash</span><button class="cpy">Copy</button></div>
+      <pre>git --version</pre>
+    </div>
+    <p style="font-size:13.5px;color:var(--tx3);margin-top:-2px">No output? Install Git for Windows from
+    <code>git-scm.com</code>, then reopen the terminal.</p>
+
+    <h4 style="margin-top:18px;font-size:15px">Option A &mdash; copy the site to its own folder</h4>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash</span><button class="cpy">Copy</button></div>
+<pre><span class="c"># create a clean folder next to your project</span>
+mkdir -p ~/Documents/sap-c-ts452-runbook
+
+<span class="c"># copy the site into it, including .nojekyll</span>
+cp -r "/c/Users/visha/Documents/Projects - 2026/SAP Certification/Guides/." \
+      ~/Documents/sap-c-ts452-runbook/
+
+cd ~/Documents/sap-c-ts452-runbook
+ls -a</pre>
+    </div>
+    <p style="font-size:13.5px;color:var(--tx2)">You should see <code>index.html</code>, <code>task3.html</code> …
+    <code>task7.html</code>, <code>edge-cases.html</code>, <code>deploy.html</code>, <code>assets/</code>,
+    <code>sw.js</code>, <code>manifest.webmanifest</code>, <code>README.md</code> and <code>.nojekyll</code>.
+    <b>No PDF.</b></p>
+
+    <h4 style="margin-top:18px;font-size:15px">Option B &mdash; rename the folder and exclude the PDF</h4>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash</span><button class="cpy">Copy</button></div>
+<pre>cd "/c/Users/visha/Documents/Projects - 2026/SAP Certification"
+mv Guides docs
+
+<span class="c"># keep the courseware out of the repository</span>
+printf '*.pdf\n' > .gitignore
+
+<span class="c"># prove it worked before committing</span>
+git init
+git status --short</pre>
+    </div>
+    <div class="co warn" style="margin-bottom:0">
+      <div class="t"><span>&#9888;</span>Stop and read the output</div>
+      If <code>C_TS452_EN_2601_Task_Instructions.pdf</code> appears in that list, the ignore did not take.
+      Fix it before committing &mdash; a file that has been committed once stays in the history even after you delete it.
+    </div>
+  </div>
+
+  <!-- ============ 3. CREATE REPO ============ -->
+  <div class="dstep">
+    <h3>Create the repository on GitHub</h3>
+    <div class="ui"><div class="ic">1</div><div>Go to <b>github.com/new</b></div></div>
+    <div class="ui"><div class="ic">2</div><div>Name it, for example <code>sap-c-ts452-runbook</code></div></div>
+    <div class="ui"><div class="ic">3</div><div>Set visibility to <b>Public</b>
+      &mdash; Pages on a private repo needs a paid plan</div></div>
+    <div class="ui"><div class="ic">4</div><div><b>Do not</b> tick "Add a README", "Add .gitignore" or
+      "Choose a license" &mdash; an initialised repo makes the first push harder</div></div>
+    <div class="ui"><div class="ic">5</div><div>Click <b>Create repository</b> and leave the page open &mdash;
+      you need the URL it shows</div></div>
+
+    <p style="margin-top:14px;color:var(--tx2)">Or, if you have the GitHub CLI:</p>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash &middot; GitHub CLI</span><button class="cpy">Copy</button></div>
+<pre>gh auth login
+gh repo create sap-c-ts452-runbook --public --source=. --remote=origin</pre>
+    </div>
+  </div>
+
+  <!-- ============ 4. PUSH ============ -->
+  <div class="dstep">
+    <h3>Commit and push</h3>
+    <p style="color:var(--tx2);margin-top:0">Run these from inside the folder you prepared in step 2.
+    Replace <code>&lt;you&gt;</code> and the repo name.</p>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash</span><button class="cpy">Copy</button></div>
+<pre>git init
+git add .
+git status --short          <span class="c"># last chance: no .pdf in this list</span>
+git commit -m "Add C_TS452 exam runbook"
+git branch -M main
+git remote add origin https://github.com/&lt;you&gt;/sap-c-ts452-runbook.git
+git push -u origin main</pre>
+    </div>
+    <div class="co warn">
+      <div class="t"><span>&#9888;</span>If the push asks for a password</div>
+      GitHub stopped accepting account passwords over HTTPS. Either run <code>gh auth login</code> once,
+      or create a <b>personal access token</b> (GitHub &rsaquo; Settings &rsaquo; Developer settings &rsaquo;
+      Personal access tokens &rsaquo; Tokens (classic), scope <code>repo</code>) and paste the token
+      where it asks for the password.
+    </div>
+    <div class="co info" style="margin-bottom:0">
+      <div class="t"><span>&#8505;</span>Line-ending warnings are harmless</div>
+      <code>warning: LF will be replaced by CRLF</code> on a Windows machine changes nothing about how
+      the site is served. Ignore it.
+    </div>
+  </div>
+
+  <!-- ============ 5. ENABLE PAGES ============ -->
+  <div class="dstep">
+    <h3>Turn on GitHub Pages</h3>
+    <div class="ui"><div class="ic">1</div><div>Open the repo &rsaquo; <b>Settings</b> &rsaquo; <b>Pages</b>
+      (left sidebar, under "Code and automation")</div></div>
+    <div class="ui"><div class="ic">2</div><div><b>Source:</b> Deploy from a branch</div></div>
+    <div class="ui"><div class="ic">3</div><div><b>Branch:</b> <code>main</code></div></div>
+    <div class="ui"><div class="ic">4</div><div><b>Folder:</b>
+      <code>/ (root)</code> for Option A &nbsp;&middot;&nbsp; <code>/docs</code> for Option B</div></div>
+    <div class="ui"><div class="ic">5</div><div><b>Save</b>, then wait. The first build takes one to three
+      minutes; the Pages panel shows the URL when it is live</div></div>
+
+    <p style="margin-top:14px;color:var(--tx2)">Your URL:</p>
+    <div class="url">https://&lt;you&gt;.github.io/sap-c-ts452-runbook/</div>
+    <p style="font-size:13.5px;color:var(--tx3);margin-bottom:0">Watch the build under the
+    <b>Actions</b> tab if it seems stuck. A green tick there but a 404 in the browser almost always
+    means the wrong folder was selected in step 4.</p>
+  </div>
+
+  <!-- ============ 6. VERIFY ============ -->
+  <div class="dstep">
+    <h3>Verify it actually works</h3>
+    <div id="verify"></div>
+  </div>
+
+  <!-- ============ 7. UPDATES ============ -->
+  <div class="dstep">
+    <h3>Changing the runbook later</h3>
+    <div class="cmd">
+      <div class="cmd-h"><span class="w">Git Bash</span><button class="cpy">Copy</button></div>
+<pre>git add .
+git commit -m "Update Task 5 tolerance steps"
+git push</pre>
+    </div>
+    <div class="co danger" style="margin-bottom:0">
+      <div class="t"><span>&#9760;</span>Bump the cache or nobody sees your change</div>
+      <p>The service worker caches the site so it works offline. If you edit any file, open
+      <code>sw.js</code> and change the version:</p>
+      <p style="font-family:var(--mono);font-size:13px;background:var(--bg2);padding:7px 11px;border-radius:6px;margin:6px 0">
+      var CACHE = 'cts452-v1';&nbsp;&nbsp;&rarr;&nbsp;&nbsp;var CACHE = 'cts452-v2';</p>
+      <p style="margin-bottom:0">Commit that in the same push. Without it, anyone who already opened the site
+      keeps seeing the old version and will think your edit did not deploy.</p>
+    </div>
+  </div>
+
+  </div><!-- /stepnum -->
+
+  <!-- ============ TROUBLESHOOTING ============ -->
+  <div class="sec">Troubleshooting</div>
+  <div class="panel">
+    <table class="dc">
+      <tr><th>What you see</th><th>Cause and fix</th></tr>
+      <tr><td><b>404 at the Pages URL</b></td>
+          <td>Most likely the first build has not finished &mdash; give it three minutes. Then check:
+          Pages is enabled, the branch is <code>main</code>, and the folder matches your layout
+          (<code>/ (root)</code> vs <code>/docs</code>). Also confirm the repo is <b>public</b>
+          if you are on a free plan.</td></tr>
+      <tr><td><b>404 on the URL, but <code>/index.html</code> works</b></td>
+          <td>You pointed Pages at a folder that has no <code>index.html</code> at its top level.
+          Re-check the folder setting.</td></tr>
+      <tr><td><b>Page loads but has no styling</b></td>
+          <td>The stylesheet 404s. Open the browser console. Almost always a <b>case</b> problem &mdash;
+          GitHub Pages is case-sensitive, Windows is not, so <code>Assets/App.css</code> works locally and
+          fails live. Everything here is lowercase; if you renamed anything, match it exactly.</td></tr>
+      <tr><td><b>Some files are missing from the live site</b></td>
+          <td>Jekyll is hiding anything whose name starts with <code>_</code>. The repo already has a
+          <code>.nojekyll</code> file &mdash; make sure it was committed
+          (<code>git ls-files | grep nojekyll</code>). Hidden files are easy to leave behind when copying
+          folders in Windows Explorer.</td></tr>
+      <tr><td><b>Old version keeps showing after a push</b></td>
+          <td>The service worker cache. Bump <code>CACHE</code> in <code>sw.js</code> and push again.
+          To force it on your own device: DevTools &rsaquo; Application &rsaquo; Service Workers &rsaquo;
+          <b>Unregister</b>, then hard reload (Ctrl+Shift+R).</td></tr>
+      <tr><td><b><code>src refspec main does not match any</code></b></td>
+          <td>You pushed before committing. Run <code>git add .</code> and <code>git commit</code> first.</td></tr>
+      <tr><td><b><code>remote origin already exists</code></b></td>
+          <td>Replace it rather than adding:
+          <code>git remote set-url origin https://github.com/&lt;you&gt;/&lt;repo&gt;.git</code></td></tr>
+      <tr><td><b><code>Support for password authentication was removed</code></b></td>
+          <td>Use <code>gh auth login</code>, or a personal access token as the password. See step 4.</td></tr>
+      <tr><td><b>Pages section is missing in Settings</b></td>
+          <td>Private repo on a free plan. Make the repo public, or upgrade.</td></tr>
+      <tr><td><b>You committed the PDF by mistake</b></td>
+          <td>Deleting it in a later commit is <b>not</b> enough &mdash; it stays in the history and stays
+          downloadable. Simplest safe fix: delete the repository on GitHub, add the
+          <code>.gitignore</code>, and push again from a fresh <code>git init</code>.</td></tr>
+      <tr><td><b>Copy buttons do nothing on the live site</b></td>
+          <td>They should work &mdash; Pages is HTTPS, which the clipboard API requires. If they fail, the
+          page falls back to a hidden textarea; check the console for a blocked-permission message.</td></tr>
+    </table>
+  </div>
+
+  <!-- ============ NOTES ============ -->
+  <div class="sec">Two things worth knowing</div>
+  <div class="panel">
+    <ol class="st">
+      <li><b>A Pages site is always publicly readable.</b> Even from a private repo on a paid plan, the
+        published URL is open to anyone who has it. The runbook itself contains nothing personal &mdash;
+        your group number, ticks, timers and logged document numbers are stored in your own browser and are
+        never part of the site &mdash; so this is fine, as long as the SAP PDF stays out.</li>
+      <li><b>Do not rely on the live site during the exam.</b> The assessment instructions tell you to close
+        other browser sessions and avoid extra tabs. Keep using the local copy on exam day; the Pages
+        version is for studying, for your phone, and for reading on a second device.</li>
+    </ol>
+  </div>
+
+  <div class="co ok" style="margin-top:18px">
+    <div class="t"><span>&#10003;</span>Once it is live</div>
+    Open it on your phone and use <b>Add to Home Screen</b> &mdash; the manifest makes it launch full-screen
+    like an app, and the service worker keeps it working with no signal.
+  </div>
+
+  <div class="co info" style="margin-top:14px">
+    <div class="t"><span>&#8505;</span>Back to the runbook</div>
+    <a href="index.html" data-tasklink="index.html">Hub</a> &middot;
+    <a href="edge-cases.html" data-tasklink="edge-cases.html">Edge cases &amp; rescue</a>
+  </div>
+
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+(function(){
+  var S = window.XS;
+
+  /* copy buttons on command blocks */
+  document.querySelectorAll('.cmd').forEach(function(box){
+    var btn = box.querySelector('.cpy'), pre = box.querySelector('pre');
+    if(!btn || !pre) return;
+    btn.addEventListener('click', function(){
+      // drop blank lines so the block pastes as one runnable run;
+      // '#' comments are kept, they are valid shell comments
+      var txt = pre.innerText.split('\n').filter(function(l){
+        return l.trim() !== '';
+      }).join('\n');
+      window.CTScopy(txt, null);
+      btn.classList.add('ok'); btn.textContent = 'Copied';
+      setTimeout(function(){ btn.classList.remove('ok'); btn.textContent = 'Copy'; }, 1200);
+    });
+  });
+
+  /* persistent verification checklist */
+  var items = [
+    'The URL loads and shows the hub page',
+    'The page is <b>styled</b> &mdash; dark cards, blue chips. Unstyled means the CSS 404s',
+    'Type a group number: every <code>##</code> on the page resolves (<code>Y0##</code> &rarr; <code>Y007</code>)',
+    'Click any value chip &mdash; the toast says <i>Copied</i>',
+    'Open <b>Task 3</b> from a card; the group number carried across',
+    'Tick a step, reload the page, and confirm the tick survived',
+    'Narrow the window below 900px: the &#9776; steps drawer appears',
+    'DevTools &rsaquo; Application &rsaquo; Service Workers shows one <b>activated</b> worker',
+    'Turn off wifi and reload &mdash; the site still opens',
+    'Open the URL on your phone and <b>Add to Home Screen</b>'
+  ];
+  var host = document.getElementById('verify');
+  host.className = 'ck';
+  host.style.cssText = 'background:none;border:0;box-shadow:none;padding:0;margin:0';
+  items.forEach(function(txt,i){
+    var key = 'cts452.deploy.' + i;
+    var row = document.createElement('div'); row.className = 'row';
+    var cb = document.createElement('div'); cb.className = 'cb'; cb.tabIndex = 0;
+    var tx = document.createElement('div'); tx.className = 'tx'; tx.innerHTML = txt;
+    function paint(){ cb.classList.toggle('on', S.get(key,'0') === '1'); }
+    function tog(){ S.set(key, S.get(key,'0') === '1' ? '0' : '1'); paint(); }
+    cb.addEventListener('click', tog);
+    cb.addEventListener('keydown', function(e){
+      if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); tog(); }
+    });
+    paint(); row.appendChild(cb); row.appendChild(tx); host.appendChild(row);
+  });
+
+  var th = S.get('cts452.theme',''); if(th) document.documentElement.setAttribute('data-theme', th);
+  document.getElementById('thm').addEventListener('click', function(){
+    var c = document.documentElement.getAttribute('data-theme'), n = c === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', n); S.set('cts452.theme', n);
+  });
+  document.getElementById('prn').addEventListener('click', function(){ window.print(); });
+
+  CTSsimple();
+})();
+</script>
+</body>
+</html>

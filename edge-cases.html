@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Edge Cases &amp; Rescue · C_TS452</title>
+<meta name="description" content="Prerequisites the C_TS452 exam text never mentions, and how to recover when a step will not go through.">
+<meta name="theme-color" content="#1a56db">
+<meta name="color-scheme" content="light dark">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="assets/app.css">
+<style>
+  .ec{background:var(--bg2);border:1px solid var(--line);border-left:4px solid var(--dgr);
+      border-radius:9px;padding:14px 16px;margin:12px 0;box-shadow:var(--sh)}
+  .ec.low{border-left-color:var(--warn)}
+  .ec.info{border-left-color:var(--acc)}
+  .ec h4{font-size:15.5px;margin-bottom:4px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+  .ec .tag2{font:700 10px var(--mono);letter-spacing:.06em;background:var(--bg3);color:var(--tx3);
+      border-radius:99px;padding:2px 8px;text-transform:uppercase;flex:none}
+  .ec .sym{color:var(--tx2);font-size:14px;margin:6px 0}
+  .ec .sym b{color:var(--tx)}
+  .ec .fix{background:var(--bg3);border-radius:7px;padding:9px 12px;margin-top:8px;font-size:14px}
+  .ec .fix .lbl{font:700 10.5px var(--sans);text-transform:uppercase;letter-spacing:.07em;color:var(--ok);margin-bottom:3px}
+  .msg{font-family:var(--mono);font-size:12.5px;background:var(--dgr-bg);color:var(--dgr);
+      padding:6px 10px;border-radius:6px;display:inline-block;margin:4px 0}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand"><span class="tag">C_TS452</span>
+      <a href="index.html" data-tasklink="index.html" style="text-decoration:none;color:inherit">Edge Cases</a></div>
+    <div class="sp"></div>
+    <div class="ctl"><label for="gg">Group&nbsp;##</label><input id="gg" class="gg-in" maxlength="2" inputmode="numeric" placeholder="--"></div>
+    <button id="thm" class="btn sm" title="Light / dark">&#9681;</button>
+    <button id="prn" class="btn sm">Print</button>
+  </div>
+</div>
+
+<div class="single">
+
+  <div class="head">
+    <div class="eyebrow" style="font:700 12px var(--mono);letter-spacing:.08em;color:var(--acc);text-transform:uppercase">Reference &middot; not a task list</div>
+    <h1>Edge cases &amp; rescue</h1>
+    <p>Prerequisites the exam text never mentions, forks where your system may behave differently
+       from the guide, and the errors that stop a step dead. Skim it once before the exam.
+       During the exam, come here only when something will not go through.</p>
+    <div class="meta">
+      <span class="pill r">3 hidden prerequisites</span>
+      <span class="pill b">4 system-version forks</span>
+      <span class="pill">9 blocking errors</span>
+    </div>
+  </div>
+
+  <!-- ================= HIDDEN PREREQUISITES ================= -->
+  <div class="sec">Hidden prerequisites &mdash; config the exam text assumes exists</div>
+  <div class="co danger">
+    <div class="t"><span>&#9760;</span>These are the ones that cost the most time</div>
+    Each is a piece of configuration that the task text takes for granted. On a clean practice
+    system it usually exists. When it does not, the step is simply impossible and the error
+    message points somewhere else entirely.
+  </div>
+
+  <div class="ec">
+    <h4><span class="tag2">Task 5.6</span> FI tolerance group must exist before the supplier will accept it</h4>
+    <div class="sym">You create the vendor-specific tolerance, go to the supplier master, type <v>C##</v> and get:
+      <div class="msg">Entry C## does not exist in T043G &ndash; check your entry</div>
+    </div>
+    <div class="fix"><div class="lbl">Fix</div>
+      <code>OBA3</code> &mdash; SPRO &rsaquo; Financial Accounting &rsaquo; Accounts Receivable and Accounts Payable &rsaquo;
+      Business Transactions &rsaquo; Outgoing Payments &rsaquo; Manual Outgoing Payments &rsaquo; <b>Define Tolerances (Vendors)</b>.
+      New entries: company code <v>1010</v>, tolerance group <v>C##</v>, currency <v>EUR</v>, values all zero.
+      Then return to the supplier. Full chain on the <a href="task5.html" data-tasklink="task5.html">Task 5 page</a>.
+    </div>
+  </div>
+
+  <div class="ec">
+    <h4><span class="tag2">Task 3.8</span> Flexible workflow may not be switched on for purchase orders at all</h4>
+    <div class="sym">You build <v>CERT##</v>, activate it, create the purchase order &mdash; and it saves clean with
+      no approval step. The workflow definition is fine; the <b>scenario</b> is not active.</div>
+    <div class="fix"><div class="lbl">Check, in this order</div>
+      <ol class="st" style="margin-top:4px">
+        <li>SPRO &rsaquo; Materials Management &rsaquo; Purchasing &rsaquo; Purchase Order &rsaquo;
+          <b>Flexible Workflow for Purchase Orders</b> &rsaquo; <i>Activate Flexible Workflow</i> &mdash; the scenario must be switched on.</li>
+        <li>Is a <b>classic release strategy</b> configured for document type <v>ZNBF</v>? Classic release and flexible
+          workflow are alternatives &mdash; if the classic strategy applies, your workflow never fires.
+          Look at the purchase order&rsquo;s <k>Release strategy</k> tab: if it shows a release group and code, the system is on classic release.</li>
+        <li>Is your workflow ordered <b>above</b> any catch-all auto-approve workflow in the app&rsquo;s list?</li>
+      </ol>
+      <p style="margin-top:6px">If classic release is what the system uses, the exam step is still about getting the order
+      released and the output processed &mdash; do that, and note it. Do not burn 20 minutes fighting the framework.</p>
+    </div>
+  </div>
+
+  <div class="ec">
+    <h4><span class="tag2">Task 4.7</span> Unplanned delivery costs may be configured to bypass the purchase order</h4>
+    <div class="sym">The exam says <i>&ldquo;post the transportation costs <b>to the purchase order</b>&rdquo;</i>. That only happens
+      if the company code is configured to <b>distribute</b> unplanned delivery costs among the invoice items.
+      The alternative setting books them to a separate G/L account and the order value never moves.</div>
+    <div class="fix"><div class="lbl">Check</div>
+      SPRO &rsaquo; Materials Management &rsaquo; Logistics Invoice Verification &rsaquo; Incoming Invoice &rsaquo;
+      <b>Configure How Unplanned Delivery Costs Are Posted</b>. For company code <v>1010</v> the entry should be
+      <i>distribute among invoice items</i> (the blank / default option), not <i>post to separate G/L account</i>.
+    </div>
+  </div>
+
+  <!-- ================= VERSION FORKS ================= -->
+  <div class="sec">System-version forks &mdash; your screen may legitimately differ</div>
+  <div class="co info">
+    <div class="t"><span>&#8505;</span>Not errors</div>
+    These are places where S/4HANA has two valid implementations. Recognise which one you are on,
+    then follow that branch. Neither is wrong.
+  </div>
+
+  <div class="ec info">
+    <h4><span class="tag2">Task 3.10 &middot; 4.4</span> Output: classic message control vs S/4 Output Management</h4>
+    <table class="dc">
+      <tr><th></th><th>Classic (NAST)</th><th>S/4 Output Management (BRF+)</th></tr>
+      <tr><td>Tab on the order</td><td><k>Messages</k></td><td><k>Output</k> / <k>Output Control</k></td></tr>
+      <tr><td>Output type</td><td><v>NEU</v>, medium 1 / 5, partner <v>VN</v></td><td>Output type <i>Purchase Order</i>, channel Print / Email</td></tr>
+      <tr><td>How to issue</td><td><code>ME9F</code> &rarr; Execute</td><td>Fiori app <b>Output Items</b> &mdash; or it is issued automatically on save</td></tr>
+      <tr><td>Proof of success</td><td>Status <i>Successfully processed</i></td><td>Status <i>Completed</i> / green in Output Items</td></tr>
+    </table>
+    <div class="fix"><div class="lbl">Rule of thumb</div>
+      If <code>ME9F</code> returns <i>no suitable purchase orders found</i> even though the order exists and carries <v>Z##</v>,
+      you are on BRF+ output management. Switch to the <b>Output</b> tab and the <b>Output Items</b> app.
+    </div>
+  </div>
+
+  <div class="ec info">
+    <h4><span class="tag2">Task 7.5 &middot; 7.10</span> Classic MRP (<code>MD02</code>) vs MRP Live (<code>MD01N</code>)</h4>
+    <div class="sym">The guide uses <code>MD02</code> because it exposes the <f>Create purchase req.</f> parameter that the
+      exam result depends on. If <code>MD02</code> is not available, use <b>MRP Live</b> &mdash; <code>MD01N</code>, or the Fiori
+      <i>Schedule MRP Run</i> app.</div>
+    <div class="fix"><div class="lbl">What changes</div>
+      MRP Live has no <i>Create purchase req.</i> control &mdash; for an externally procured material
+      (procurement type <v>F</v>, which you set on MRP 2) it creates <b>purchase requisitions</b> directly, which is what you want.
+      Run it for material <v>T-RC5##</v> and plant <v>1010</v>, then check <code>MD04</code> exactly as described.
+      <b>Do not use planning mode 3 / &ldquo;delete and recreate&rdquo;</b> on the second run &mdash; it can wipe planning data.
+    </div>
+  </div>
+
+  <div class="ec info">
+    <h4><span class="tag2">Task 5.7</span> Seeing that the invoice was actually reduced</h4>
+    <div class="sym">Automatic invoice reduction is silent if you are not looking in the right place.
+      The columns that show it live in a different <b>item list layout</b>.</div>
+    <div class="fix"><div class="lbl">How to see it</div>
+      In <code>MIRO</code>, change the item list <b>layout variant</b> to the <i>Invoice Reduction</i> one. It adds the
+      <f>Correction ID</f> column plus the vendor&rsquo;s quantity and amount. A reduced invoice also produces a
+      <b>second document</b> (the complaint / credit memo) &mdash; check the follow-on documents after posting.
+      <br><br>If the system does <b>not</b> reduce automatically, the same layout lets you do it by hand:
+      set <f>Correction ID</f> to <i>Vendor error: reduce invoice</i> and enter the vendor&rsquo;s figures.
+      That is a legitimate fallback, but do the tolerance config first &mdash; the config is what is graded.
+    </div>
+  </div>
+
+  <div class="ec info">
+    <h4><span class="tag2">Task 3.1</span> The plant copy asks several questions &mdash; answer them differently</h4>
+    <div class="fix"><div class="lbl">How to answer</div>
+      <ul class="bl">
+        <li><b>&ldquo;Copy all dependent entries?&rdquo;</b> &rarr; <b>Yes.</b> This is the customizing you actually need.</li>
+        <li><b>Anything offering to copy material master data, stock or transaction data</b> &rarr; <b>No / skip.</b>
+          It can run for many minutes and you do not need it.</li>
+        <li>Read the completion log before leaving. A copy that ended in errors leaves a half-built plant that looks fine in <code>OX10</code>.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ================= BLOCKING ERRORS ================= -->
+  <div class="sec">Blocking errors &mdash; message to cause to fix</div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 3.9</span> Purchase order rejects the new supplier</h4>
+    <div class="sym"><div class="msg">Partner function VN is not defined / no partner roles maintained</div>
+      The business partner has a purchasing org segment but no <b>partner functions</b>.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      <code>BP</code> &rarr; <v>SP-C##</v> &rarr; role <k>Supplier</k> &rarr; <k>Purchasing Org</k> <v>P0##</v> &rarr;
+      tab <k>Partner Functions</k>. Add <v>VN</v> (vendor); add <v>OA</v> and <v>PI</v> if the system insists.
+      Usually filled automatically from the account group &mdash; when it is not, this is the error you see.
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 5.1</span> No component screen appears on the subcontracting order</h4>
+    <div class="sym">You set item category <v>L</v> and press Enter, and nothing explodes.</div>
+    <div class="fix"><div class="lbl">Causes, in order of likelihood</div>
+      <ol class="st" style="margin-top:4px">
+        <li>Item category is not actually <v>L</v> &mdash; check the column, not what you meant to type.</li>
+        <li>The material has <b>no bill of material</b> for plant <v>1010</v>. Check with <code>CS03</code>
+          (material <v>T-FL4A##</v>, plant 1010, BOM usage 1 production or 3 universal).</li>
+        <li>A BOM exists but not for that plant or that usage.</li>
+      </ol>
+      <p style="margin-top:6px">If there is genuinely no BOM, you can still enter the component manually on the
+      component screen &mdash; add <v>T-FL4A1##</v> with the quantity the task implies. The process still posts.</p>
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 3 &middot; any goods movement in a new plant</span> Account determination fails</h4>
+    <div class="sym"><div class="msg">Account determination for entry ... not possible</div>
+      The new plant is not assigned to a valuation grouping code, so <code>OBYC</code> cannot resolve an account.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      <code>OMWD</code> &mdash; assign valuation area <v>Y0##</v> to the same valuation grouping code that plant
+      <v>1010</v> uses. A correct <i>Copy org. object</i> normally brings this across; a hand-built plant never does.
+      <br><span style="color:var(--tx3)">Task 3 has no goods movement, so this usually stays dormant &mdash; but it is the
+      classic symptom of a plant that was created instead of copied.</span>
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 6.1</span> The 10&nbsp;% discount condition will not go in</h4>
+    <div class="sym">Neither <v>RA01</v> nor <v>RA00</v> appears in the header condition list.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      The condition type must be in the calculation schema assigned to purchasing org <v>101C</v> and the supplier&rsquo;s
+      schema group. Open the header conditions and press <k>F4</k> on the condition type field to see what <i>is</i> available,
+      then take any <b>percentage discount</b> condition offered. The graded fact is a 10&nbsp;% discount at header level,
+      not the specific four characters.
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 6.1</span> Item category <v>W</v> demands a target value</h4>
+    <div class="sym">You leave quantity and price empty, as you should, and the item still will not save.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      In a value contract, a <v>W</v> item can require its own <b>target value</b> at item level.
+      Put a sensible figure in &mdash; anything up to the header target of <m>100000,00</m>, for example <m>50000,00</m>.
+      The header target value is what the exam names, so leave that at 100.000.
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 6.3</span> Movement 103 refused on an item</h4>
+    <div class="sym">GR blocked stock is only possible for a <b>stock</b> item.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      Post 103 for item 10 (<v>B520-5##</v>) only. Untick <f>Item OK</f> on the two cost-center items &mdash;
+      an account-assigned item is consumed on receipt and cannot sit in blocked or quality inspection stock.
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 7.9</span> MRP ignores the source list line</h4>
+    <div class="sym">Run #2 produces a requisition with no supplier, or with the old one.</div>
+    <div class="fix"><div class="lbl">Check all four</div>
+      <ul class="bl">
+        <li>The source list line&rsquo;s <b>validity covers the requirement date</b> &mdash; the requirement is next month, so
+          a line valid only until the end of this month is invisible to it.</li>
+        <li>The <b>contract itself is valid</b> on that date (it starts on the 1st of this month, so it is).</li>
+        <li>Both <f>Agreement</f> and <f>Item</f> are filled.</li>
+        <li><f>MRP</f> = <v>1</v> on the contract line, and blank on the info-record line.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Task 7.2</span> &ldquo;Source list requirement&rdquo; blocks procurement</h4>
+    <div class="sym"><div class="msg">Source list requirement not fulfilled</div>
+      Ticking <f>Source list</f> on MRP 2 makes the source list <b>mandatory</b> &mdash; every procurement then needs a valid entry.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      Either maintain the source list properly (which you are doing anyway), or untick the flag on the material.
+      The exam does not require the flag &mdash; it requires MRP to find a source.
+    </div>
+  </div>
+
+  <div class="ec low">
+    <h4><span class="tag2">Any task</span> Object locked by your own other session</h4>
+    <div class="sym"><div class="msg">Material T-RC## is currently locked by user TS450-##</div>
+      You left the same object open in another window or another mode.</div>
+    <div class="fix"><div class="lbl">Fix</div>
+      Close the other window. If it persists, <code>SM12</code> &rarr; enter your user &rarr; find the lock entry on that object
+      &rarr; delete it. Only ever delete <b>your own</b> locks.
+    </div>
+  </div>
+
+  <!-- ================= HABITS ================= -->
+  <div class="sec">Habits that prevent most of the above</div>
+  <div class="panel" style="background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)">
+    <ol class="st">
+      <li><b>One SAP window per object.</b> Most lock errors are self-inflicted.</li>
+      <li><b>Save before you switch tasks.</b> A session timeout loses everything unsaved, and the
+        practice system will time out if you read this page for ten minutes.</li>
+      <li><b>Read the status bar after every save.</b> &ldquo;Document 45000123 created&rdquo; is your evidence.
+        Write the number down immediately &mdash; you will need it two steps later.</li>
+      <li><b>Double-click any message you do not understand</b> for the long text. It usually names the exact
+        table or field that is missing.</li>
+      <li><b>If a field you need is not on screen</b>, it is hidden by a layout: check
+        <k>Personal Settings</k> in <code>ME21N</code> / <code>ME51N</code>, the item detail tabs rather than the overview,
+        or the list layout variant in <code>MIRO</code>.</li>
+      <li><b>When a step will not go through after two honest attempts</b>, log it, skip it, move on.
+        Come back only if time remains. Five tasks are independent; a stubborn step is not worth three others.</li>
+    </ol>
+  </div>
+
+  <div class="co info" style="margin-top:20px">
+    <div class="t"><span>&#8505;</span>Back to work</div>
+    <a href="index.html" data-tasklink="index.html">Hub</a> &middot;
+    <a href="task3.html" data-tasklink="task3.html">Task 3</a> &middot;
+    <a href="task4.html" data-tasklink="task4.html">Task 4</a> &middot;
+    <a href="task5.html" data-tasklink="task5.html">Task 5</a> &middot;
+    <a href="task6.html" data-tasklink="task6.html">Task 6</a> &middot;
+    <a href="task7.html" data-tasklink="task7.html">Task 7</a>
+  </div>
+
+</div>
+
+<script src="assets/app.js"></script>
+<script>
+(function(){
+  var S=window.XS, gg=document.getElementById('gg');
+  gg.value=S.get('cts452.gg','');
+  var d; gg.addEventListener('input',function(){ clearTimeout(d); var v=gg.value.replace(/\D/g,'').slice(0,2);
+    d=setTimeout(function(){ S.set('cts452.gg',v); location.hash = v?('gg='+(v.length===1?'0'+v:v)):''; location.reload(); },600); });
+  var th=S.get('cts452.theme',''); if(th) document.documentElement.setAttribute('data-theme',th);
+  document.getElementById('thm').addEventListener('click',function(){
+    var c=document.documentElement.getAttribute('data-theme'), n=c==='dark'?'light':'dark';
+    document.documentElement.setAttribute('data-theme',n); S.set('cts452.theme',n);
+  });
+  document.getElementById('prn').addEventListener('click',function(){window.print();});
+  CTSsimple();
+})();
+</script>
+</body>
+</html>
